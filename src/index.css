@@ -30,6 +30,15 @@
   }
 }
 
+/* Scrollbar Hide Utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Custom Responsive Fixes */
 @media (max-width: 640px) {
   .hide-on-mobile {

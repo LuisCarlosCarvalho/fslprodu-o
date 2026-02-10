@@ -792,14 +792,14 @@ export function AdminDashboard() {
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">Painel Administrativo</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">Painel Administrativo</h1>
           <Link
             to="/approvals"
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-sm sm:text-base font-semibold"
           >
             <CheckSquare size={20} />
-            Aprovações e Recuperação de Senha
+            Aprovações e Senhas
           </Link>
         </div>
 
