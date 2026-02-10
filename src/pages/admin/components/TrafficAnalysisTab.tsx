@@ -73,30 +73,30 @@ export function TrafficAnalysisTab() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header & Input Module */}
-      <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xl overflow-hidden relative">
-        <div className="absolute top-0 right-0 p-4">
-           {isConnectedGSC ? (
-             <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-100">
-               <Zap size={14} fill="currentColor" />
-               Google Search Console: Conectado
-             </div>
-           ) : (
-             <button 
-               onClick={() => GSCService.connectGoogle()}
-               className="flex items-center gap-2 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-100 hover:bg-blue-100 transition-all"
-             >
-               <Globe size={14} />
-               Conectar dados reais (GSC)
-             </button>
-           )}
+      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-xl overflow-hidden relative">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <div className="p-2 bg-yellow-400 rounded-lg text-white flex-shrink-0">
+              <Zap size={20} fill="currentColor" />
+            </div>
+            Análise de Tráfego Profissional
+          </h2>
+          
+          {isConnectedGSC ? (
+            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border border-emerald-100 w-full sm:w-auto justify-center">
+              <Zap size={14} fill="currentColor" />
+              GSC: Conectado
+            </div>
+          ) : (
+            <button 
+              onClick={() => GSCService.connectGoogle()}
+              className="flex items-center gap-2 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border border-blue-100 hover:bg-blue-100 transition-all w-full sm:w-auto justify-center"
+            >
+              <Globe size={14} />
+              Conectar dados reais (GSC)
+            </button>
+          )}
         </div>
-
-        <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-          <div className="p-2 bg-yellow-400 rounded-lg text-white">
-            <Zap size={20} fill="currentColor" />
-          </div>
-          Análise de Tráfego Profissional
-        </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="space-y-2">
@@ -233,9 +233,9 @@ export function TrafficAnalysisTab() {
 
           {/* Opportunity Score & Data Trust */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest">
+                <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   Traffic Opportunity Score
                   <div className="group relative">
                     <AlertTriangle size={14} className="text-gray-300 cursor-help" />
@@ -244,16 +244,16 @@ export function TrafficAnalysisTab() {
                     </div>
                   </div>
                 </div>
-                <p className="text-gray-500 text-sm">Oportunidade de crescimento identificada para <span className="font-bold text-gray-900">{mainDomain}</span></p>
+                <p className="text-gray-500 text-sm">Oportunidade para <span className="font-bold text-gray-900 truncate inline-block max-w-[150px] align-bottom">{mainDomain}</span></p>
               </div>
-              <div className="flex items-center gap-6">
-                <div className={`text-5xl font-black ${
+              <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                <div className={`text-4xl sm:text-5xl font-black ${
                   report.opportunity_score >= 70 ? 'text-emerald-500' :
                   report.opportunity_score >= 40 ? 'text-amber-500' : 'text-rose-500'
                 }`}>
                   {report.opportunity_score}
                 </div>
-                <div className="h-16 w-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-16 w-3 sm:w-2 bg-gray-100 rounded-full overflow-hidden">
                   <div 
                     className={`w-full transition-all duration-1000 ${
                       report.opportunity_score >= 70 ? 'bg-emerald-500' :
@@ -317,16 +317,16 @@ export function TrafficAnalysisTab() {
 
           {/* Intelligence Layer */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
-            <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+            <div className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 -z-0" />
-              <h3 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-2 relative z-10">
+              <h3 className="text-lg sm:text-xl font-black text-gray-900 mb-8 flex items-center gap-2 relative z-10">
                 <Zap className="text-blue-500" size={24} fill="currentColor" />
                 Inteligência Competitiva
               </h3>
               <div className="space-y-6 relative z-10">
                 {report.insights.intelligence.map((insight: any, idx: number) => (
-                  <div key={idx} className="p-5 rounded-2xl border border-gray-50 bg-gray-50/30 hover:bg-white hover:shadow-md transition-all group">
-                    <div className="flex justify-between items-center mb-4">
+                  <div key={idx} className="p-4 sm:p-5 rounded-2xl border border-gray-50 bg-gray-50/30 hover:bg-white hover:shadow-md transition-all group">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                       <span className="font-black text-gray-900 text-lg">{insight.domain}</span>
                       {insight.alert && (
                         <span className="flex items-center gap-1.5 text-[10px] font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-full uppercase border border-rose-100">
@@ -335,7 +335,7 @@ export function TrafficAnalysisTab() {
                         </span>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-sm">
                       <div className="space-y-1">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Vantagem</p>
                         <p className="font-bold text-emerald-600 leading-tight">{insight.advantage}</p>

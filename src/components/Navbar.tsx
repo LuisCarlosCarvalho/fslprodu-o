@@ -12,9 +12,12 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-3">
-              <img src="/logo.png" alt="FSL Solution" className="h-10 w-10" />
-              <span className="text-2xl font-bold text-gray-900">FSL Solution Digital</span>
+            <Link href="/" className="flex items-center gap-2 sm:gap-3">
+              <img src="/logo.png" alt="FSL Solution" className="h-8 w-8 sm:h-10 sm:w-10" />
+              <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
+                <span className="text-lg sm:text-2xl font-bold text-gray-900 leading-tight">FSL Solution</span>
+                <span className="text-[10px] sm:text-sm font-medium text-blue-600 uppercase tracking-wider -mt-1 sm:mt-0">Digital</span>
+              </div>
             </Link>
           </div>
 
