@@ -90,6 +90,18 @@ Deno.serve(async (req: Request) => {
       }).eq('id', integration.id)
     }
 
+    // Verify token scopes with Google for debugging
+    try {
+      const scopeCheck = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`)
+      const scopeData = await scopeCheck.json()
+      console.log(`[GSC Debug] Google Token Scopes: ${scopeData.scope}`)
+      if (scopeData.error) {
+        console.error(`[GSC Debug] Google Token Info Error: ${scopeData.error_description}`)
+      }
+    } catch (e) {
+      console.error('[GSC Debug] Failed to verify scopes:', e)
+    }
+
     // List of site URL formats to try
     let siteUrlsToTry = []
     if (domain.includes('://')) {

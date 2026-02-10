@@ -81,6 +81,15 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  const origin = url.origin.includes('supabase.co') ? 'http://localhost:5173' : url.origin
+  // Redirect back to the admin panel
+  // We try to detect the origin, defaulting to the production site if on Supabase domain
+  let origin = url.origin
+  if (origin.includes('supabase.co')) {
+    // If we're on the Supabase domain, we need to know where we came from.
+    // We can check if it's localhost or the production domain.
+    // For now, let's prefer the production domain as default for safety.
+    origin = 'https://fslsolution.com'
+  }
+  
   return Response.redirect(`${origin}/admin?tab=traffic&connected=true`, 302)
 })
