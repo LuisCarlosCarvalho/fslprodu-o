@@ -145,11 +145,24 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!gscData) {
+      // Discovery phase: What sites DOES this user have?
+      let availableSites = []
+      try {
+        const sitesResponse = await fetch('https://www.googleapis.com/webmasters/v3/sites', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+        const sitesData = await sitesResponse.json()
+        availableSites = sitesData.siteEntry?.map((s: any) => s.siteUrl) || []
+      } catch (e) {
+        console.error('[GSC] Failed to list available sites:', e)
+      }
+
       return new Response(JSON.stringify({ 
         error: 'Google Search Console API Error', 
         details: lastError,
         message: 'Nenhum dos formatos de domínio (sc-domain ou https) foi encontrado na sua conta GSC. Verifique se o domínio foi adicionado corretamente.',
-        triedMethods: siteUrlsToTry
+        triedMethods: siteUrlsToTry,
+        availableProperties: availableSites
       }), { 
         status: 403, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
