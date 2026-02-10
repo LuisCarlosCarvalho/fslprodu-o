@@ -29,17 +29,23 @@ export const SEOApiService = {
     // 2. Check GSC Integration
     const hasGSC = await GSCService.checkIntegration();
     if (hasGSC) {
-      const gscData = await GSCService.getPerformanceData(domain);
-      if (gscData) {
-        const simulatedBase = TrafficSimulator.generateFullReport(domain, country, competitors);
-        const reinforcedReport = {
-          ...simulatedBase,
-          ...gscData,
-          data_trust_level: 'High' as DataTrustLevel
-        };
-        await this.updateCache(domain, country, reinforcedReport);
-        await this.logApiUsage('GSC', 'metrics', 0.01, 200);
-        return reinforcedReport;
+      try {
+        const gscData = await GSCService.getPerformanceData(domain);
+        if (gscData) {
+          const simulatedBase = TrafficSimulator.generateFullReport(domain, country, competitors);
+          const reinforcedReport = {
+            ...simulatedBase,
+            ...gscData,
+            data_trust_level: 'High' as DataTrustLevel
+          };
+          await this.updateCache(domain, country, reinforcedReport);
+          await this.logApiUsage('GSC', 'metrics', 0.01, 200);
+          return reinforcedReport;
+        } else {
+          console.warn('[SEO API] GSC Connected but fetch failed (null). Falling back to Estimated.');
+        }
+      } catch (e) {
+        console.error('[SEO API] GSC Fetch failed:', e);
       }
     }
 

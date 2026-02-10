@@ -37,12 +37,13 @@ function generateHistory(domain: string, visits: number, points: number = 30) {
 export const TrafficSimulator = {
   analyzeDomain(domain: string, country: string): TrafficMetrics {
     const seed = getSeed(domain);
-    const baseVisits = (seed % 1000) * 1500 + 5000;
+    // Reduzido drasticamente para ser mais realista para sites novos/médios
+    const baseVisits = (seed % 100) * 85 + 120; // 120 a 8620 visitas
     
     return {
       visits: baseVisits,
-      growth: (seed % 40) - 15, // -15% a +25%
-      bounce_rate: 35 + (seed % 30),
+      growth: (seed % 30) - 10, // -10% a +20%
+      bounce_rate: 45 + (seed % 25),
       avg_duration: 120 + (seed % 300),
       channels: {
         organic: 30 + (seed % 40),
