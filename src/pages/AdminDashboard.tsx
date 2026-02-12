@@ -800,10 +800,10 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+    <div className="flex flex-col md:flex-row">
       {/* Sidebar Navigation */}
-      <aside className="bg-white border-r border-gray-200 w-full md:w-64 flex-shrink-0 z-30">
-        <div className="sticky top-0 h-screen overflow-y-auto custom-scrollbar flex flex-col">
+      <aside className="bg-white border-b md:border-b-0 md:border-r border-gray-200 w-full md:w-64 flex-shrink-0 z-30">
+        <div className="md:sticky md:top-16 md:h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar flex flex-col">
           <div className="p-6 border-b border-gray-100">
             <h1 className="text-xl font-bold text-gray-900 flex flex-col gap-1">
               Painel Administrativo
