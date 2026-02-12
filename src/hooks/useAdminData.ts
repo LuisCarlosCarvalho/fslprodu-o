@@ -25,10 +25,28 @@ export function useAdminData(activeTab: string) {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [clientLogos, setClientLogos] = useState<ClientLogo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    projects: 0,
+    clients: 0,
+    quotes: 0,
+    blogPosts: 0
+  });
 
   const loadData = useCallback(async () => {
+    // Environment and Session Guard
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setLoading(false);
+        return;
+      }
+
       if (activeTab === 'projects') {
         const { data: projectsData } = await supabase
           .from('projects')
@@ -116,18 +134,16 @@ export function useAdminData(activeTab: string) {
         });
       }
     } catch (error) {
-      console.error('Error loading data:', getErrorMessage(error));
+      const errMessage = getErrorMessage(error);
+      if (errMessage.includes('Invalid data') || errMessage.includes('PIN Company')) {
+        // Silently ignore extension pollution
+        return;
+      }
+      console.error('[Admin Data] Load error:', errMessage);
     } finally {
       setLoading(false);
     }
   }, [activeTab]);
-
-  const [stats, setStats] = useState({
-    projects: 0,
-    clients: 0,
-    quotes: 0,
-    blogPosts: 0
-  });
 
   useEffect(() => {
     loadData();

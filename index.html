@@ -2,12 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="icon" type="image/png" href="/app-icon.png" />
+    <link rel="apple-touch-icon" href="/app-icon.png" />
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#2563eb" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="FSL Solution" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -15,8 +14,69 @@
       content="xtF4rwvmKY-lOjkX9Wxu49wKoKyf69oK6dD5mJPzCrk"
     />
     <title>FSL Solution Digital | Marketing Inteligente</title>
+    
+    <script>
+      (function() {
+        // Suppress and filter third-party extension noise (mostly Pinli/PIN Company)
+        const suppressPatterns = [
+          'chrome-extension://',
+          'Empty token!',
+          'PIN Company Discounts',
+          'Failed to fetch', 
+          'Invalid data',
+          'zustand',
+          'denied', // Sometimes thrown by extension injection
+          'net::ERR_FAILED' // Suppress common network noise from extensions
+        ];
+
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        const originalLog = console.log;
+
+      const shouldSuppress = (msg) => {
+        if (!msg) return false;
+        let str = '';
+        if (msg instanceof Error) {
+          str = msg.message + ' ' + msg.stack;
+        } else if (typeof msg === 'object') {
+          try {
+            str = JSON.stringify(msg);
+          } catch (e) {
+            str = String(msg);
+          }
+        } else {
+          str = String(msg);
+        }
+        return suppressPatterns.some(p => str.includes(p));
+      };
+
+        console.error = function() {
+          if (shouldSuppress(arguments[0])) return;
+          originalError.apply(console, arguments);
+        };
+
+        console.warn = function() {
+          if (shouldSuppress(arguments[0])) return;
+          originalWarn.apply(console, arguments);
+        };
+
+        // Suppress specific extension injection errors
+        window.addEventListener('error', (e) => {
+          if (e.filename?.startsWith('chrome-extension://') || shouldSuppress(e.message)) {
+            e.stopImmediatePropagation();
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', (e) => {
+          if (shouldSuppress(e.reason)) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+        }, true);
+      })();
+    </script>
   </head>
-  <body translate="no" className="notranslate">
+  <body translate="no" class="notranslate">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

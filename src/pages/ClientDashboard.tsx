@@ -27,6 +27,7 @@ export function ClientDashboard() {
   const [uploadingFile, setUploadingFile] = useState(false);
 
   const loadProjects = useCallback(async () => {
+    if (!user?.id) return;
     try {
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')

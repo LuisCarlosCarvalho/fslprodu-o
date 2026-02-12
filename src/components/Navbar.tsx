@@ -1,35 +1,11 @@
 import { Link } from './Link';
 import { useAuth } from '../contexts/AuthContext';
-import { Menu, X, LogOut, LayoutDashboard, Download } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Menu, X, LogOut, LayoutDashboard } from 'lucide-react';
+import { useState } from 'react';
 
 export function Navbar() {
   const { user, profile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBtn, setShowInstallBtn] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallBtn(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-      setShowInstallBtn(false);
-    }
-  };
 
   return (
     <nav className="bg-white shadow-md fixed w-full top-0 z-50">
@@ -52,16 +28,6 @@ export function Navbar() {
             <Link href="/blog" className="text-gray-700 hover:text-gray-900">Blog</Link>
             <Link href="/infoproducts" className="text-gray-700 hover:text-gray-900">SEO de Gestão</Link>
             <Link href="/contact" className="text-gray-700 hover:text-gray-900">Contato</Link>
-
-            {showInstallBtn && (
-              <button
-                onClick={handleInstallClick}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-200"
-              >
-                <Download size={18} />
-                Instalar App
-              </button>
-            )}
 
             {user ? (
               <>
@@ -101,33 +67,27 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-t">
           <div className="px-4 pt-2 pb-4 space-y-2">
-            <Link href="/" className="block py-2 text-gray-700">Inicio</Link>
-            <Link href="/services" className="block py-2 text-gray-700">Serviços</Link>
-            <Link href="/portfolio" className="block py-2 text-gray-700">Portfolio</Link>
-            <Link href="/blog" className="block py-2 text-gray-700">Blog</Link>
-            <Link href="/infoproducts" className="block py-2 text-gray-700">SEO de Gestão</Link>
-            <Link href="/contact" className="block py-2 text-gray-700">Contato</Link>
-
-            {showInstallBtn && (
-              <button
-                onClick={handleInstallClick}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold"
-              >
-                <Download size={20} />
-                Instalar Aplicativo
-              </button>
-            )}
+            <Link href="/" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
+            <Link href="/services" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Serviços</Link>
+            <Link href="/portfolio" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Portfolio</Link>
+            <Link href="/blog" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
+            <Link href="/infoproducts" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>SEO de Gestão</Link>
+            <Link href="/contact" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Contato</Link>
 
             {user ? (
               <>
                 <Link
                   href={profile?.role === 'admin' ? '/admin' : '/dashboard'}
                   className="block py-2 text-gray-700"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   Dashboard
                 </Link>
                 <button
-                  onClick={() => signOut()}
+                  onClick={() => {
+                    signOut();
+                    setMobileMenuOpen(false);
+                  }}
                   className="block py-2 text-gray-700 w-full text-left"
                 >
                   Sair
@@ -135,7 +95,7 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/login" className="block py-2 text-gray-700">Login</Link>
+                <Link href="/login" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Login</Link>
               </>
             )}
           </div>

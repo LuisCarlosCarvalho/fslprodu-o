@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { InstallPWA } from './components/InstallPWA';
 import { EnvCheck } from './components/EnvCheck';
 import { Loader2 } from 'lucide-react';
 
@@ -88,6 +89,7 @@ function Layout() {
         )}
       </Suspense>
       <Navbar />
+      <InstallPWA />
       <main className="flex-grow pt-16">
         <Suspense fallback={<PageLoader />}>
           <Routes>

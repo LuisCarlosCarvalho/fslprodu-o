@@ -30,64 +30,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     let timeoutId: NodeJS.Timeout;
 
-    const forceLoadingComplete = () => {
+    // Safety timeout to prevent infinite loading screens
+    const safetyTimeout = () => {
       timeoutId = setTimeout(() => {
-        if (mounted) {
-          console.warn('Auth timeout - forcing loading to complete');
+        if (mounted && loading) {
+          console.warn('[Auth Context] Initialization timed out - forcing ready state');
           setLoading(false);
         }
-      }, 10000);
+      }, 8000);
     };
 
-    forceLoadingComplete();
+    safetyTimeout();
+
+    const loadProfile = async (userId: string) => {
+      if (!userId) {
+        if (mounted) setLoading(false);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (mounted) setProfile(data || null);
+      } catch (err) {
+        console.error('[Auth Context] Error loading profile:', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
 
     const initAuth = async () => {
-      console.log('[Auth Context] Starting initAuth...');
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('[Auth Context] getSession finished. Session exists:', !!session);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
 
         if (!mounted) return;
 
-        setUser(session?.user ?? null);
-        console.log('[Auth Context] User set:', session?.user?.email || 'null');
+        const sessionUser = session?.user ?? null;
+        
+        // Sequence: setUser -> loadProfile -> setLoading(false)
+        setUser(sessionUser);
 
-        if (session?.user) {
-          console.log('[Auth Context] Loading profile for:', session.user.id);
-          await loadProfile(session.user.id);
-          console.log('[Auth Context] Profile loading triggered.');
+        if (sessionUser) {
+          await loadProfile(sessionUser.id);
         } else {
-          console.log('[Auth Context] No user, setting loading to false.');
+          setProfile(null);
           setLoading(false);
         }
-      } catch (error) {
-        console.error('[Auth Context] Initialization error:', error);
+      } catch (err) {
+        console.error('[Auth Context] Initialization error:', err);
         if (mounted) {
+          setUser(null);
+          setProfile(null);
           setLoading(false);
         }
       }
     };
 
-    const setupAuthListener = () => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (!mounted) return;
-
-        (async () => {
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            await loadProfile(session.user.id);
-          } else {
-            setProfile(null);
-            setLoading(false);
-          }
-        })();
-      });
-
-      return subscription;
-    };
+    const subscription = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
+      const sessionUser = session?.user ?? null;
+      
+      setUser(sessionUser);
+      if (sessionUser) {
+        await loadProfile(sessionUser.id);
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
+    }).data.subscription;
 
     initAuth();
-    const subscription = setupAuthListener();
 
     return () => {
       mounted = false;
@@ -96,88 +113,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const loadProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error loading profile:', error);
-      }
-
-      if (data) {
-        setProfile(data);
-      } else {
-        console.log('No profile found for user:', userId);
-      }
-    } catch (error) {
-      console.error('Profile load error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signUp = async (email: string, password: string, fullName: string, phone?: string): Promise<AuthResponse> => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) return { error };
 
-    if (error) return { error };
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            full_name: fullName,
+            phone: phone || null,
+            role: 'client',
+          });
 
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          full_name: fullName,
-          phone: phone || null,
-          role: 'client',
-        });
+        if (profileError) return { error: profileError };
 
-      if (profileError) return { error: profileError };
-
-      try {
-        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-approval-email`;
-        const response = await fetch(apiUrl, {
+        // Async email notification
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-approval-email`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            userId: data.user.id,
-            email,
-            fullName,
-            phone: phone || '',
-          }),
-        });
-
-        if (!response.ok) {
-          console.error('Erro ao enviar email de aprovação:', await response.text());
-        }
-      } catch (emailError) {
-        console.error('Erro ao chamar função de email:', emailError);
+          body: JSON.stringify({ userId: data.user.id, email, fullName, phone: phone || '' }),
+        }).catch(err => console.error('[Auth Context] Approval email error:', err));
       }
-    }
 
-    return { user: data.user, error: null };
+      return { user: data.user, error: null };
+    } catch (err: any) {
+      return { error: err, user: null };
+    }
   };
 
   const signIn = async (email: string, password: string): Promise<AuthResponse> => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error };
+    } catch (err: any) {
+      return { error: err };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+    } catch (err) {
+      console.error('[Auth Context] Sign out error:', err);
+    }
   };
 
   const resetPassword = async (email: string): Promise<AuthResponse> => {
@@ -193,16 +179,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email }),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        return { error: new Error(result.error || 'Erro ao solicitar recuperação de senha') };
+        const result = await response.json();
+        return { error: new Error(result.error || 'Erro ao solicitar recuperação') };
       }
 
       return { error: null };
-    } catch (error) {
-      console.error('Erro ao solicitar recuperação de senha:', error);
-      return { error: new Error('Erro ao solicitar recuperação de senha') };
+    } catch (err: any) {
+      return { error: err };
     }
   };
 
@@ -210,7 +194,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const reloadProfile = async () => {
     if (user) {
-      await loadProfile(user.id);
+      try {
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        if (data) setProfile(data);
+      } catch (err) {
+        console.error('[Auth Context] Profile reload error:', err);
+      }
     }
   };
 

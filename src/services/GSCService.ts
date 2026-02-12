@@ -21,18 +21,35 @@ export const GSCService = {
   /**
    * Verifica se o usuário atual tem uma integração ativa
    */
-  async checkIntegration(): Promise<boolean> {
+  async checkIntegration(): Promise<{ connected: boolean; email?: string }> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
+    if (!user) return { connected: false };
 
     const { data, error } = await supabase
       .from('google_integrations')
-      .select('id, expires_at')
+      .select('email')
       .eq('user_id', user.id)
       .single();
 
-    if (error || !data) return false;
-    return true;
+    if (error || !data) return { connected: false };
+    return { connected: true, email: data.email };
+  },
+
+  /**
+   * Remove a integração atual
+   */
+  async disconnectGoogle() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { error } = await supabase
+      .from('google_integrations')
+      .delete()
+      .eq('user_id', user.id);
+      
+    if (!error) {
+      window.location.reload();
+    }
   },
 
   /**
@@ -64,7 +81,7 @@ export const GSCService = {
         },
         body: JSON.stringify({ 
           domain, 
-          token: session.access_token, // Enviando aqui para evitar bloqueio do Gateway
+          token: session.access_token, 
           startDate: thirtyDaysAgo.toISOString().split('T')[0], 
           endDate: now.toISOString().split('T')[0] 
         })

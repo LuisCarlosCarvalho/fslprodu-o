@@ -157,12 +157,21 @@ Deno.serve(async (req: Request) => {
         console.error('[GSC] Failed to list available sites:', e)
       }
 
+      let errorMessage = 'O domínio não foi encontrado na conta conectada. Verifique se você deu as permissões e se o site está cadastrado no Search Console deste e-mail.';
+      
+      if (availableSites.length === 0) {
+        errorMessage = `A conta conectada (${integration.email}) NÃO possui nenhum site cadastrado ou verificado no Search Console. Você precisa adicionar seu site no painel do Google primeiro.`;
+      } else {
+        errorMessage = `O domínio não foi encontrado na conta conectada (${integration.email}). Sites disponíveis nesta conta: ${availableSites.join(', ')}.`;
+      }
+
       return new Response(JSON.stringify({ 
         error: 'Google Search Console API Error', 
         details: lastError,
-        message: 'Nenhum dos formatos de domínio (sc-domain ou https) foi encontrado na sua conta GSC. Verifique se o domínio foi adicionado corretamente.',
+        message: errorMessage,
         triedMethods: siteUrlsToTry,
-        availableProperties: availableSites
+        availableProperties: availableSites,
+        authorized_email: integration.email
       }), { 
         status: 403, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -197,9 +206,10 @@ Deno.serve(async (req: Request) => {
     })
   } catch (error) {
     console.error('Internal Error:', error)
-    return new Response(JSON.stringify({ error: 'Internal Server Error', message: error.message }), { 
+    const errMsg = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error', message: errMsg }), { 
       status: 500, 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     })
   }
-})
+});

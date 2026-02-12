@@ -252,12 +252,17 @@ export function AdminDashboard() {
   };
 
   const loadProjectSteps = async (projectId: string) => {
-    const { data } = await supabase
-      .from('project_steps')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('order_index', { ascending: true });
-    setProjectSteps(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('project_steps')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      setProjectSteps(data || []);
+    } catch (err) {
+      console.error('[Admin] Error loading project steps:', err);
+    }
   };
 
   const handleSaveStep = async () => {
@@ -293,15 +298,20 @@ export function AdminDashboard() {
   };
 
   const loadProjectMessages = async (projectId: string) => {
-    const { data } = await supabase
-      .from('messages')
-      .select(`
-        *,
-        sender:profiles!sender_id(full_name)
-      `)
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: true });
-    setProjectMessages(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:profiles!sender_id(full_name)
+        `)
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      setProjectMessages(data || []);
+    } catch (err) {
+      console.error('[Admin] Error loading messages:', err);
+    }
   };
 
   const handleSendProjectMessage = async () => {
@@ -790,172 +800,199 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">Painel Administrativo</h1>
-          <Link
-            to="/approvals"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-sm sm:text-base font-semibold"
-          >
-            <CheckSquare size={20} />
-            Aprovações e Senhas
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg mb-8">
-          <div className="border-b">
-            <nav className="flex gap-8 px-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'overview'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <TrendingUp size={20} />
-                Visão Geral
-              </button>
-              <button
-                onClick={() => setActiveTab('projects')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'projects'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <FolderOpen size={20} />
-                Projetos
-              </button>
-              <button
-                onClick={() => setActiveTab('clients')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'clients'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <Users size={20} />
-                Clientes
-              </button>
-              <button
-                onClick={() => setActiveTab('quotes')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'quotes'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <MessageSquare size={20} />
-                Orçamentos
-              </button>
-                <button
-                  onClick={() => setActiveTab('portfolio')}
-                  className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                    activeTab === 'portfolio'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <Briefcase size={20} />
-                  Portfólio
-                </button>
-                <button
-                  onClick={() => setActiveTab('blog')}
-                  className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                    activeTab === 'blog'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <FileText size={20} />
-                  Blog
-                </button>
-                <button
-                  onClick={() => setActiveTab('logos')}
-                  className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                    activeTab === 'logos'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <Users size={20} />
-                  Logos
-                </button>
-              <button
-                onClick={() => setActiveTab('infoproducts')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'infoproducts'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <ShoppingCart size={20} />
-                SEO de Gestão
-              </button>
-              <button
-                onClick={() => setActiveTab('services')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'services'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <Settings size={20} />
-                Serviços
-              </button>
-              <button
-                onClick={() => setActiveTab('messages')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'messages'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <MessageSquare size={20} />
-                Mensagens
-              </button>
-              <button
-                onClick={() => setActiveTab('checkout_config')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'checkout_config'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <Lock size={20} />
-                Pagamentos
-              </button>
-              <button
-                onClick={() => setActiveTab('traffic')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'traffic'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <TrendingUp size={20} />
-                Tráfego
-              </button>
-              <button
-                onClick={() => setActiveTab('seo_admin')}
-                className={`py-4 border-b-2 font-semibold flex items-center gap-2 ${
-                  activeTab === 'seo_admin'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <BarChart3 size={20} />
-                SEO Admin
-              </button>
-            </nav>
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      {/* Sidebar Navigation */}
+      <aside className="bg-white border-r border-gray-200 w-full md:w-64 flex-shrink-0 z-30">
+        <div className="sticky top-0 h-screen overflow-y-auto custom-scrollbar flex flex-col">
+          <div className="p-6 border-b border-gray-100">
+            <h1 className="text-xl font-bold text-gray-900 flex flex-col gap-1">
+              Painel Administrativo
+              <span className="w-fit px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-black uppercase tracking-wider border border-blue-100">
+                Admin
+              </span>
+            </h1>
           </div>
+          
+          <nav className="flex-1 p-4 space-y-1">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'overview'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <TrendingUp size={20} />
+              Visão Geral
+            </button>
 
-          <div className="p-6">
+            <div className="pt-4 pb-2 px-4 text-xs font-black text-gray-400 uppercase tracking-widest">
+              Gestão
+            </div>
+
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'projects'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <FolderOpen size={20} />
+              Projetos
+            </button>
+            <button
+              onClick={() => setActiveTab('clients')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'clients'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Users size={20} />
+              Clientes
+            </button>
+            <button
+              onClick={() => setActiveTab('quotes')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'quotes'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <MessageSquare size={20} />
+              Orçamentos
+            </button>
+             <button
+              onClick={() => setActiveTab('messages')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'messages'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <MessageCircle size={20} />
+              Mensagens (Chat)
+            </button>
+
+            <div className="pt-4 pb-2 px-4 text-xs font-black text-gray-400 uppercase tracking-widest">
+              Conteúdo
+            </div>
+
+            <button
+              onClick={() => setActiveTab('portfolio')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'portfolio'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Briefcase size={20} />
+              Portfólio
+            </button>
+            <button
+              onClick={() => setActiveTab('blog')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'blog'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <FileText size={20} />
+              Blog
+            </button>
+            <button
+              onClick={() => setActiveTab('logos')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'logos'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Users size={20} />
+              Logos
+            </button>
+            <button
+              onClick={() => setActiveTab('infoproducts')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'infoproducts'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <ShoppingCart size={20} />
+              SEO de Gestão
+            </button>
+            <button
+              onClick={() => setActiveTab('services')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'services'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Settings size={20} />
+              Serviços
+            </button>
+
+            <div className="pt-4 pb-2 px-4 text-xs font-black text-gray-400 uppercase tracking-widest">
+              Configurações
+            </div>
+
+            <button
+              onClick={() => setActiveTab('checkout_config')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'checkout_config'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Lock size={20} />
+              Pagamentos
+            </button>
+            <button
+              onClick={() => setActiveTab('traffic')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'traffic'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <TrendingUp size={20} />
+              Tráfego
+            </button>
+            <button
+              onClick={() => setActiveTab('seo_admin')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'seo_admin'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <BarChart3 size={20} />
+              SEO Admin
+            </button>
+          </nav>
+
+          <div className="p-4 border-t border-gray-100">
+             <Link
+              to="/approvals"
+              className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white px-5 py-3 rounded-xl hover:bg-blue-600 transition-all text-sm font-bold shadow-lg shadow-gray-200 hover:shadow-blue-200 active:scale-95"
+            >
+              <CheckSquare size={18} />
+              Aprovações
+            </Link>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0 bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 min-h-[600px] p-6 lg:p-8">
             {loading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="flex justify-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
               </div>
             ) : (
               <>
@@ -1241,7 +1278,7 @@ export function AdminDashboard() {
                           message: '',
                           value: '',
                           observations: '',
-                        });
+                          });
                         setShowReplyModal(true);
                     }}
                   />

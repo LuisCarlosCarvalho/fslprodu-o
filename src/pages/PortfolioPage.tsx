@@ -36,33 +36,18 @@ export function PortfolioPage() {
 
   const loadPortfolio = async () => {
     try {
-      if (
-        !import.meta.env.VITE_SUPABASE_URL ||
-        !import.meta.env.VITE_SUPABASE_ANON_KEY
-      ) {
-        console.error("⚠️ Variáveis de ambiente do Supabase não configuradas!");
-        console.error(
-          "Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no Vercel",
-        );
-        setLoading(false);
-        return;
-      }
-
+      setLoading(true);
+      
       const { data, error } = await supabase
         .from("portfolio")
         .select("*")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Erro ao carregar portfólio:", error);
-        throw error;
-      }
-
-      console.log("✅ Portfólio carregado com sucesso:", data?.length, "itens");
+      if (error) throw error;
       setPortfolioItems(data || []);
     } catch (error) {
-      console.error("Error loading portfolio:", error);
+      console.error("[Portfolio] Error loading portfolio items:", error);
     } finally {
       setLoading(false);
     }
@@ -128,7 +113,11 @@ export function PortfolioPage() {
                     alt={item.title}
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800';
+                      const target = e.target as HTMLImageElement;
+                      if (!target.src.includes('unsplash-placeholder')) {
+                        target.src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800&fallback=portfolio';
+                        target.dataset.error = 'true';
+                      }
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Monitor, Smartphone, Tablet } from 'lucide-react';
 
 interface ElementorWidget {
   id: string;
@@ -28,6 +28,7 @@ export function TemplateDemoPage() {
   const [template, setTemplate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -178,20 +179,47 @@ export function TemplateDemoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden">
-      {/* Dynamic Header for the Demo */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-700 py-4 px-6 flex justify-between items-center transition-all duration-300">
+    <div className="min-h-screen bg-[#f8f9fa] text-slate-900 overflow-x-hidden">
+      {/* Simulation Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-6 py-4 flex flex-col md:flex-row justify-between items-center shadow-sm gap-4">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/portfolio')}
-            className="p-2 hover:bg-slate-800 rounded-full transition-colors text-white"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
+            title="Sair da demonstração"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <span className="text-white font-medium truncate max-w-[200px] md:max-w-md">
-            Preview: {template.title}
+          <span className="text-xl font-black text-blue-600 tracking-tighter uppercase leading-none">
+            PRÉVIA
           </span>
         </div>
+
+        {/* Device Switcher */}
+        <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => setViewMode('desktop')}
+            className={`p-2 rounded-md transition-all ${viewMode === 'desktop' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            title="Desktop View"
+          >
+            <Monitor size={20} />
+          </button>
+          <button
+            onClick={() => setViewMode('tablet')}
+            className={`p-2 rounded-md transition-all ${viewMode === 'tablet' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            title="Tablet View"
+          >
+            <Tablet size={20} />
+          </button>
+          <button
+            onClick={() => setViewMode('mobile')}
+            className={`p-2 rounded-md transition-all ${viewMode === 'mobile' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            title="Mobile View"
+          >
+            <Smartphone size={20} />
+          </button>
+        </div>
+
         <div className="flex items-center gap-2">
            <span className="hidden md:inline text-xs text-slate-400 mr-4">Preview do Modelo de Página</span>
            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
@@ -200,17 +228,26 @@ export function TemplateDemoPage() {
         </div>
       </div>
 
-      {/* Main Content Render */}
-      <div className="pt-20">
-        {template.content?.map((section: any) => renderSection(section))}
+      {/* Main Content Render Area */}
+      <div className="pt-24 pb-12 flex justify-center bg-[#f8f9fa] min-h-screen">
+        <div 
+          className={`bg-white shadow-2xl transition-all duration-500 ease-in-out border border-gray-200 rounded-t-xl overflow-hidden ${
+            viewMode === 'desktop' ? 'w-full' : 
+            viewMode === 'tablet' ? 'w-[768px]' : 
+            'w-[375px]'
+          }`}
+          style={{ height: 'fit-content', minHeight: 'calc(100vh - 150px)' }}
+        >
+          {template.content?.map((section: any) => renderSection(section))}
+          
+          {/* Footer Disclaimer Inside Frame */}
+          <footer className="bg-slate-900 text-white py-12 px-6 text-center border-t border-slate-800">
+             <p className="text-slate-400 text-sm">
+               &copy; {new Date().getFullYear()} FSL Solution. Este é um preview demonstrativo do modelo de página.
+             </p>
+          </footer>
+        </div>
       </div>
-
-      {/* Footer Disclaimer */}
-      <footer className="bg-slate-900 text-white py-12 px-6 text-center border-t border-slate-800">
-         <p className="text-slate-400 text-sm">
-           &copy; {new Date().getFullYear()} FSL Solution. Este é um preview demonstrativo do modelo de página.
-         </p>
-      </footer>
     </div>
   );
 }

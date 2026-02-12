@@ -17,11 +17,13 @@ export function TrafficAnalysisTab() {
   const [isExporting, setIsExporting] = useState(false);
   const [report, setReport] = useState<TrafficAnalysisReport | null>(null);
   const [isConnectedGSC, setIsConnectedGSC] = useState(false);
+  const [connectedEmail, setConnectedEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const checkGSC = async () => {
-      const connected = await GSCService.checkIntegration();
+      const { connected, email } = await GSCService.checkIntegration();
       setIsConnectedGSC(connected);
+      setConnectedEmail(email || null);
     };
     checkGSC();
   }, []);
@@ -83,9 +85,17 @@ export function TrafficAnalysisTab() {
           </h2>
           
           {isConnectedGSC ? (
-            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border border-emerald-100 w-full sm:w-auto justify-center">
-              <Zap size={14} fill="currentColor" />
-              GSC: Conectado
+            <div className="flex flex-col items-end gap-1 w-full sm:w-auto">
+              <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border border-emerald-100 w-full sm:w-auto justify-center">
+                <Zap size={14} fill="currentColor" />
+                GSC: {connectedEmail || 'Conectado'}
+              </div>
+              <button 
+                onClick={() => GSCService.disconnectGoogle()}
+                className="text-[10px] text-red-500 hover:text-red-700 underline font-medium px-2"
+              >
+                Desconectar e trocar conta
+              </button>
             </div>
           ) : (
             <button 

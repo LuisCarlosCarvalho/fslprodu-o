@@ -14,7 +14,8 @@ export default function VisitCounter() {
         });
 
         if (error) {
-          console.error('Error incrementing visit:', error);
+          // Silent log for public noise reduction
+          return; 
         }
 
         const { data, error: fetchError } = await supabase
@@ -23,11 +24,11 @@ export default function VisitCounter() {
           .eq('page', 'home')
           .maybeSingle();
 
-        if (fetchError) {
-          console.error('Error fetching visits:', fetchError);
-        } else if (data) {
+        if (fetchError) return; // Silent
+        else if (data) {
           setVisitCount(data.visit_count);
         }
+        if (error) return; // Silent for noise reduction
       } catch (error) {
         console.error('Error tracking visit:', error);
       } finally {

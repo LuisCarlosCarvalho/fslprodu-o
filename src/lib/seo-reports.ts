@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { TrafficAnalysisReport } from '../types';
 
 /**
@@ -12,7 +12,7 @@ export const SEOReportService = {
     const dateStr = new Date(report.created_at).toLocaleDateString('pt-BR');
     
     // Configurações de Cores Premium (FSL Brand)
-    const BRAND_BLUE = [30, 64, 175]; // #1e40af
+    const BRAND_BLUE: [number, number, number] = [30, 64, 175]; // #1e40af
     
     // --- PÁGINA 1: CAPA & SUMÁRIO ---
     
@@ -87,7 +87,7 @@ export const SEOReportService = {
       ['Crescimento SEO', `${report.report_data.main.growth}%`, 'Em Evolução']
     ];
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: [metricData[0]],
       body: metricData.slice(1),
       startY: 135,
@@ -97,10 +97,10 @@ export const SEOReportService = {
     });
 
     // --- SEÇÃO: COMPARAÇÃO COMPETITIVA ---
-    const lastY = (doc as any).lastAutoTable.cursor.y;
+    const finalY = (doc as any).lastAutoTable.cursor.y;
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('INTELIGÊNCIA COMPETITIVA (GAPS)', 15, lastY + 15);
+    doc.text('INTELIGÊNCIA COMPETITIVA (GAPS)', 15, finalY + 15);
 
     const competitiveData = report.insights.intelligence.map(ins => [
       ins.domain,
@@ -109,10 +109,10 @@ export const SEOReportService = {
       ins.opportunity
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: [['Competidor', 'Vantagem', 'Seu Gap', 'Oportunidade']],
       body: competitiveData,
-      startY: lastY + 20,
+      startY: finalY + 20,
       theme: 'grid',
       headStyles: { fillColor: [55, 65, 81] }, // Slate-700
       styles: { fontSize: 8 }

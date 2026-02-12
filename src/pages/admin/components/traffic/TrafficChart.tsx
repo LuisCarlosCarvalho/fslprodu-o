@@ -13,7 +13,7 @@ export function TrafficChart({ data, type, title }: TrafficChartProps) {
   return (
     <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm h-[400px] flex flex-col">
       <h3 className="text-lg font-bold text-gray-900 mb-6">{title}</h3>
-      <div className="flex-1 w-full">
+      <div className="flex-1 w-full min-h-[300px]">
         {type === 'line' ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
