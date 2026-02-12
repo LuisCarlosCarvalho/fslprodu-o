@@ -145,6 +145,20 @@ export function useAdminData(activeTab: string) {
     }
   }, [activeTab]);
 
+  // Safety timeout
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (loading) {
+      timeout = setTimeout(() => {
+        if (loading) {
+          console.warn('[Admin Data] Loading timed out');
+          setLoading(false);
+        }
+      }, 10000); // 10s timeout
+    }
+    return () => clearTimeout(timeout);
+  }, [loading]);
+
   useEffect(() => {
     loadData();
   }, [loadData]);

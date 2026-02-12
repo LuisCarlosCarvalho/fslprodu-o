@@ -39,7 +39,15 @@ export function Navbar() {
                   Dashboard
                 </Link>
                 <button
-                  onClick={() => signOut()}
+                  onClick={async () => {
+                    try {
+                      await signOut();
+                      window.location.href = '/login';
+                    } catch (error) {
+                      console.error('Logout error:', error);
+                      window.location.href = '/login';
+                    }
+                  }}
                   className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
                 >
                   <LogOut size={18} />
@@ -84,9 +92,14 @@ export function Navbar() {
                   Dashboard
                 </Link>
                 <button
-                  onClick={() => {
-                    signOut();
+                  onClick={async () => {
                     setMobileMenuOpen(false);
+                    try {
+                      await signOut();
+                      window.location.href = '/login';
+                    } catch (error) {
+                      window.location.href = '/login';
+                    }
                   }}
                   className="block py-2 text-gray-700 w-full text-left"
                 >
