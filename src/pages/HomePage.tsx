@@ -14,8 +14,15 @@ export function HomePage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const setCanvasSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    setCanvasSize();
 
     const particles: Array<{
       x: number;
@@ -25,7 +32,8 @@ export function HomePage() {
       size: number;
     }> = [];
 
-    const particleCount = 80;
+    // Reduced particle count for better performance
+    const particleCount = window.innerWidth < 768 ? 30 : 50;
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
@@ -36,6 +44,8 @@ export function HomePage() {
         size: Math.random() * 2 + 1,
       });
     }
+
+    let animationFrameId: number;
 
     function animate() {
       if (!ctx || !canvas) return;
@@ -72,20 +82,20 @@ export function HomePage() {
         });
       });
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     }
 
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      setCanvasSize();
     };
 
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
