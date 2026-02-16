@@ -16,54 +16,35 @@ export interface SEOGlobalSettings {
 
 export const SEOAdminService = {
   /**
-   * Busca estatísticas de uso da API baseadas nos logs
+   * Busca estatísticas de uso da API via RPC
    */
   async getStats(): Promise<SEOAdminStats> {
-    const { data: logs } = await supabase
-      .from('api_usage_logs')
-      .select('cost_estimated, status_code, created_at')
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+    const { data, error } = await supabase.rpc('get_seo_admin_stats', { days: 30 });
 
-    if (!logs || logs.length === 0) {
-      return { totalCost: 0, requestsMonth: 0, avgLatency: '0ms', errorRate: '0%' };
+    if (error) {
+      console.error('Failed to fetch SEO stats via RPC:', error);
+      return { totalCost: 0, requestsMonth: 0, avgLatency: '-', errorRate: '-' };
     }
 
-    const totalCost = logs.reduce((acc, log) => acc + (log.cost_estimated || 0), 0);
-    const requests = logs.length;
-    const errors = logs.filter(log => log.status_code >= 400).length;
-    const errorRate = ((errors / requests) * 100).toFixed(1) + '%';
-
-    return {
-      totalCost: parseFloat(totalCost.toFixed(2)),
-      requestsMonth: requests,
-      avgLatency: '850ms', // Latência real exigiria medir tempo de req no log
-      errorRate
-    };
+    return data as SEOAdminStats;
   },
 
   /**
-   * Busca os domínios mais analisados
+   * Busca os domínios mais analisados via RPC
    */
   async getTopDomains() {
-    const { data: reports } = await supabase
-      .from('traffic_reports')
-      .select('main_domain');
+    const { data, error } = await supabase.rpc('get_top_domains', { limit_count: 4 });
 
-    if (!reports) return [];
+    if (error) {
+       console.error('Failed to fetch top domains via RPC:', error);
+       return [];
+    }
 
-    const counts: Record<string, number> = {};
-    reports.forEach(r => {
-      counts[r.main_domain] = (counts[r.main_domain] || 0) + 1;
-    });
-
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
-      .map(([domain, count]) => ({
-        domain,
-        count,
-        trend: '+0%' // Tendência real exigiria comparação temporal
-      }));
+    return (data || []).map((d: any) => ({
+      domain: d.domain,
+      count: d.count,
+      trend: '+0%' // Placeholder
+    }));
   },
 
   /**
