@@ -136,23 +136,32 @@ export function useAdminData(activeTab: string) {
           .abortSignal(signal);
         setClientLogos(logosData || []);
       } else if (activeTab === 'overview') {
-        const [
-          { count: projectsCount },
-          { count: clientsCount },
-          { count: quotesCount },
-          { count: blogCount }
-        ] = await Promise.all([
-          supabase.from('projects').select('*', { count: 'exact', head: true }).abortSignal(signal),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'client').abortSignal(signal),
-          supabase.from('quote_requests').select('*', { count: 'exact', head: true }).abortSignal(signal),
-          supabase.from('blog_posts').select('*', { count: 'exact', head: true }).abortSignal(signal)
+        // Fetch each stat independently to prevent one failure from blocking the others
+        const fetchCount = async (table: string, filter?: { col: string, val: string }) => {
+          try {
+            let query = supabase.from(table).select('*', { count: 'exact', head: true });
+            if (filter) query = query.eq(filter.col, filter.val);
+            const { count, error } = await query.abortSignal(signal);
+            if (error) throw error;
+            return count || 0;
+          } catch (err) {
+            console.warn(`[Admin Data] Failed to fetch count for ${table}:`, err);
+            return 0;
+          }
+        };
+
+        const [projectsCount, clientsCount, quotesCount, blogCount] = await Promise.all([
+          fetchCount('projects'),
+          fetchCount('profiles', { col: 'role', val: 'client' }),
+          fetchCount('quote_requests'),
+          fetchCount('blog_posts')
         ]);
 
         setStats({
-          projects: projectsCount || 0,
-          clients: clientsCount || 0,
-          quotes: quotesCount || 0,
-          blogPosts: blogCount || 0
+          projects: projectsCount,
+          clients: clientsCount,
+          quotes: quotesCount,
+          blogPosts: blogCount
         });
       }
     } catch (error: any) {

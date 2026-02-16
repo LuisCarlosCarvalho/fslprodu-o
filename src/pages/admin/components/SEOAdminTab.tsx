@@ -11,20 +11,25 @@ export function SEOAdminTab() {
   const [settings, setSettings] = useState<SEOGlobalSettings | null>(null);
   const [topDomains, setTopDomains] = useState<{ domain: string; count: number; trend: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
         const [s, set, top] = await Promise.all([
-          SEOAdminService.getStats(),
-          SEOAdminService.getSettings(),
-          SEOAdminService.getTopDomains()
+          SEOAdminService.getStats().catch(e => {
+            console.error('Stats error:', e);
+            return { totalCost: 0, requestsMonth: 0, avgLatency: '-', errorRate: '-' };
+          }),
+          SEOAdminService.getSettings().catch(() => null),
+          SEOAdminService.getTopDomains().catch(() => [])
         ]);
         setStats(s);
         setSettings(set);
         setTopDomains(top);
       } catch (e) {
         console.error('Failed to load SEO admin data:', e);
+        setError('Falha ao carregar dados do dashboard.');
       } finally {
         setLoading(false);
       }
@@ -39,13 +44,31 @@ export function SEOAdminTab() {
     await SEOAdminService.updateSettings({ [key]: newValue });
   };
 
-  if (loading || !stats) {
+  if (loading) {
     return (
       <div className="h-96 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="h-96 flex flex-col items-center justify-center text-red-500 gap-4">
+        <ShieldAlert size={48} />
+        <p className="font-bold">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-red-100 rounded-lg text-sm hover:bg-red-200 transition-colors"
+        >
+          Tentar Novamente
+        </button>
+      </div>
+    );
+  }
+
+  // Fallback if stats are still null for some reason (shouldn't happen with catch blocks above)
+  if (!stats) return null;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
