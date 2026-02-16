@@ -46,6 +46,7 @@ export function ServicesPage() {
   });
   const [currentStep, setCurrentStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -518,6 +519,7 @@ export function ServicesPage() {
                       <FileUpload 
                         files={formData.attachments} 
                         onFilesChange={(urls) => setFormData({...formData, attachments: urls})} 
+                        onUploadStatusChange={setIsUploading}
                       />
 
                       <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
@@ -550,10 +552,10 @@ export function ServicesPage() {
                       ) : (
                         <button
                           type="submit"
-                          disabled={loading}
-                          className="w-full md:w-auto bg-blue-700 text-white px-12 py-4 rounded-2xl font-black hover:bg-blue-800 transition-all uppercase tracking-widest text-sm shadow-xl shadow-blue-100 disabled:opacity-50"
+                          disabled={loading || isUploading}
+                          className="w-full md:w-auto bg-blue-700 text-white px-12 py-4 rounded-2xl font-black hover:bg-blue-800 transition-all uppercase tracking-widest text-sm shadow-xl shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {loading ? 'PROCESSANDO...' : 'PROTOCOLAR O.S.'}
+                          {loading ? 'PROCESSANDO...' : isUploading ? 'ENVIANDO ARQUIVOS...' : 'PROTOCOLAR O.S.'}
                         </button>
                       )}
                     </div>

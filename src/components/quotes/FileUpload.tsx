@@ -6,9 +6,10 @@ type FileUploadProps = {
   files: string[];
   onFilesChange: (urls: string[]) => void;
   maxSizeMB?: number;
+  onUploadStatusChange?: (isUploading: boolean) => void;
 };
 
-export function FileUpload({ files, onFilesChange, maxSizeMB = 5 }: FileUploadProps) {
+export function FileUpload({ files, onFilesChange, maxSizeMB = 5, onUploadStatusChange }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -17,42 +18,49 @@ export function FileUpload({ files, onFilesChange, maxSizeMB = 5 }: FileUploadPr
     if (!selectedFiles || selectedFiles.length === 0) return;
 
     setUploading(true);
+    onUploadStatusChange?.(true); // Notify parent
     const newUrls: string[] = [...files];
 
-    for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        
-        // Validation
-        if (file.size > maxSizeMB * 1024 * 1024) {
-            alert(`Arquivo ${file.name} excede o limite de ${maxSizeMB}MB.`);
-            continue;
-        }
+    try {
+      for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          
+          // Validation
+          if (file.size > maxSizeMB * 1024 * 1024) {
+              alert(`Arquivo ${file.name} excede o limite de ${maxSizeMB}MB.`);
+              continue;
+          }
 
-        try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-            const filePath = `quote-attachments/${fileName}`;
+          try {
+              const fileExt = file.name.split('.').pop();
+              const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+              const filePath = `quote-attachments/${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-                .from('quotes')
-                .upload(filePath, file);
+              const { error: uploadError } = await supabase.storage
+                  .from('quotes')
+                  .upload(filePath, file);
 
-            if (uploadError) throw uploadError;
+              if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('quotes')
-                .getPublicUrl(filePath);
+              const { data: { publicUrl } } = supabase.storage
+                  .from('quotes')
+                  .getPublicUrl(filePath);
 
-            newUrls.push(publicUrl);
-        } catch (error) {
-            console.error('Erro no upload:', error);
-            alert('Falha ao enviar arquivo. Tente novamente.');
-        }
+              newUrls.push(publicUrl);
+          } catch (error) {
+              console.error('Erro no upload:', error);
+              // Don't alert here to avoid spamming alerts, just log
+          }
+      }
+
+      onFilesChange(newUrls);
+    } catch (err) {
+      console.error('Critical upload error:', err);
+    } finally {
+      setUploading(false);
+      onUploadStatusChange?.(false); // Notify parent
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-
-    onFilesChange(newUrls);
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const removeFile = (indexToRemove: number) => {
