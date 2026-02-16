@@ -14,15 +14,9 @@ export function HomePage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Check for reduced motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
-    const setCanvasSize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    setCanvasSize();
+    // Set canvas size safely
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     const particles: Array<{
       x: number;
@@ -32,8 +26,8 @@ export function HomePage() {
       size: number;
     }> = [];
 
-    // Reduced particle count for better performance
-    const particleCount = window.innerWidth < 768 ? 30 : 50;
+    // Safe particle count
+    const particleCount = 40;
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
@@ -45,11 +39,9 @@ export function HomePage() {
       });
     }
 
-    let animationFrameId: number;
+    let animationId: number;
 
-    function animate() {
-      if (!ctx || !canvas) return;
-
+    const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       particles.forEach((particle) => {
@@ -65,6 +57,7 @@ export function HomePage() {
         ctx.fill();
       });
 
+      // Draw connections
       particles.forEach((p1, i) => {
         particles.slice(i + 1).forEach((p2) => {
           const dx = p1.x - p2.x;
@@ -82,20 +75,23 @@ export function HomePage() {
         });
       });
 
-      animationFrameId = requestAnimationFrame(animate);
-    }
+      animationId = requestAnimationFrame(animate);
+    };
 
     animate();
 
     const handleResize = () => {
-      setCanvasSize();
+      if (canvas) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
     };
 
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(animationId);
     };
   }, []);
 
