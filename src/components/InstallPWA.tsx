@@ -16,12 +16,12 @@ export function InstallPWA() {
     const handler = (e: any) => {
       // Prevent browser from showing its own prompt
       e.preventDefault();
+      setDeferredPrompt(e);
       
       const hasBeenDismissed = localStorage.getItem('pwa_prompt_dismissed');
       if (!hasBeenDismissed) {
-        setDeferredPrompt(e);
         // Show banner after a slight delay
-        const timer = setTimeout(() => setIsVisible(true), 6000); // 6s for better mobile stability
+        const timer = setTimeout(() => setIsVisible(true), 6000); 
         return () => clearTimeout(timer);
       }
     };

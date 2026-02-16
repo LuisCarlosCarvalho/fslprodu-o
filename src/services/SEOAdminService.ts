@@ -75,7 +75,8 @@ export const SEOAdminService = {
       .select('*')
       .single();
     
-    return data;
+    if (error) return null;
+    return data as unknown as SEOGlobalSettings;
   },
 
   async updateSettings(settings: Partial<SEOGlobalSettings>) {

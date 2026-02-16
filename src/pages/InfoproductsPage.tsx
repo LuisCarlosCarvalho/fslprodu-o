@@ -9,20 +9,24 @@ export function InfoproductsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadProducts();
+    const controller = new AbortController();
+    loadProducts(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const loadProducts = async () => {
+  const loadProducts = async (signal?: AbortSignal) => {
     try {
       const { data, error } = await supabase
         .from('marketing_products')
         .select('*')
+        .abortSignal(signal || new AbortController().signal)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setProducts(data || []);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') return;
       console.error('Error loading products:', error);
     } finally {
       setLoading(false);
@@ -75,7 +79,7 @@ export function InfoproductsPage() {
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=800&fallback=marketing';
+                        (e.target as HTMLImageElement).src = 'https://placehold.co/800x600/e2e8f0/1e293b?text=Marketing';
                       }}
                     />
                    ) : product.image_url ? (
@@ -84,7 +88,7 @@ export function InfoproductsPage() {
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=800&fallback=marketing_alt';
+                        (e.target as HTMLImageElement).src = 'https://placehold.co/800x600/e2e8f0/1e293b?text=Marketing';
                       }}
                     />
                   ) : (
@@ -145,7 +149,7 @@ export function InfoproductsPage() {
         )}
 
         <div className="mt-20 bg-blue-900 rounded-3xl p-12 text-center text-white relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80')] opacity-10 bg-cover bg-center" />
+          <div className="absolute inset-0 bg-blue-900 opacity-10 bg-cover bg-center" />
           <div className="relative z-10">
             <h2 className="text-3xl font-bold mb-4">
               Precisa de uma solução personalizada?

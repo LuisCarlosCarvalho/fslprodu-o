@@ -66,6 +66,9 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
           alt={`${title} - Imagem ${selectedIndex + 1}`}
           className="w-full h-full object-cover transition-transform duration-200 ease-out"
           style={zoomStyle}
+          onError={(e) => {
+            e.currentTarget.src = "https://placehold.co/600x600/e2e8f0/1e293b?text=Sem+Imagem";
+          }}
         />
 
         {/* Controls (only if > 1 image) */}
@@ -108,6 +111,9 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
                 src={img}
                 alt={`Thumbnail ${idx + 1}`}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "https://placehold.co/100x100/e2e8f0/1e293b?text=Erro";
+                }}
               />
             </button>
           ))}

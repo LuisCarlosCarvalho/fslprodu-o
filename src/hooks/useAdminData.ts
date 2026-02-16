@@ -33,85 +33,107 @@ export function useAdminData(activeTab: string) {
   });
 
   const loadData = useCallback(async () => {
-    // Environment and Session Guard
+    // Environment Check
     if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
       setLoading(false);
       return;
     }
 
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     setLoading(true);
     try {
+      // Golden Rule: Verify Session & Token
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      
+      if (!session?.access_token) {
         setLoading(false);
         return;
       }
 
+      // Check current tab
       if (activeTab === 'projects') {
-        const { data: projectsData } = await supabase
+        const { data: projectsData, error: projectsError } = await supabase
           .from('projects')
           .select(`
             *,
             client:profiles!client_id(*),
             service:services(*)
           `)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .abortSignal(signal);
+        
+        if (projectsError) throw projectsError;
         setProjects(projectsData || []);
 
         const { data: servicesData } = await supabase
           .from('services')
           .select('*')
-          .order('name');
+          .order('name')
+          .abortSignal(signal);
         setServices(servicesData || []);
 
         const { data: clientsData } = await supabase
           .from('profiles')
           .select('*')
           .eq('role', 'client')
-          .order('full_name');
+          .order('full_name')
+          .abortSignal(signal);
         setClients(clientsData || []);
       } else if (activeTab === 'clients') {
-        const { data: clientsData } = await supabase
+        const { data: clientsData, error: clientsError } = await supabase
           .from('profiles')
           .select('*')
           .eq('role', 'client')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .abortSignal(signal);
+        
+        if (clientsError) throw clientsError;
         setClients(clientsData || []);
       } else if (activeTab === 'quotes' || activeTab === 'messages') {
-        const { data: quotesData } = await supabase
+        const { data: quotesData, error: quotesError } = await supabase
           .from('quote_requests')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .abortSignal(signal);
+          
+        if (quotesError) throw quotesError;
         setQuotes(quotesData || []);
       } else if (activeTab === 'infoproducts') {
         const { data: productsData } = await supabase
           .from('marketing_products')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .abortSignal(signal);
         setMarketingProducts(productsData || []);
       } else if (activeTab === 'portfolio') {
         const { data: portfolioData } = await supabase
           .from('portfolio')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .abortSignal(signal);
         setPortfolioItems(portfolioData || []);
       } else if (activeTab === 'services') {
         const { data: servicesData } = await supabase
           .from('services')
           .select('*')
-          .order('name');
+          .order('name')
+          .abortSignal(signal);
         setServices(servicesData || []);
       } else if (activeTab === 'blog') {
         const { data: blogData } = await supabase
           .from('blog_posts')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .abortSignal(signal);
         setBlogPosts(blogData || []);
       } else if (activeTab === 'logos') {
         const { data: logosData } = await supabase
           .from('client_logos')
           .select('*')
-          .order('order_index', { ascending: true });
+          .order('order_index', { ascending: true })
+          .abortSignal(signal);
         setClientLogos(logosData || []);
       } else if (activeTab === 'overview') {
         const [
@@ -120,10 +142,10 @@ export function useAdminData(activeTab: string) {
           { count: quotesCount },
           { count: blogCount }
         ] = await Promise.all([
-          supabase.from('projects').select('*', { count: 'exact', head: true }),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'client'),
-          supabase.from('quote_requests').select('*', { count: 'exact', head: true }),
-          supabase.from('blog_posts').select('*', { count: 'exact', head: true })
+          supabase.from('projects').select('*', { count: 'exact', head: true }).abortSignal(signal),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'client').abortSignal(signal),
+          supabase.from('quote_requests').select('*', { count: 'exact', head: true }).abortSignal(signal),
+          supabase.from('blog_posts').select('*', { count: 'exact', head: true }).abortSignal(signal)
         ]);
 
         setStats({
@@ -133,13 +155,16 @@ export function useAdminData(activeTab: string) {
           blogPosts: blogCount || 0
         });
       }
-    } catch (error) {
-      const errMessage = getErrorMessage(error);
-      if (errMessage.includes('Invalid data') || errMessage.includes('PIN Company')) {
-        // Silently ignore extension pollution
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
         return;
       }
-      console.error('[Admin Data] Load error:', errMessage);
+      
+      const errMessage = getErrorMessage(error);
+      if (errMessage.includes('Invalid data') || errMessage.includes('PIN Company')) {
+        return;
+      }
+      console.warn('[Admin Data] Non-critical load error:', errMessage);
     } finally {
       setLoading(false);
     }

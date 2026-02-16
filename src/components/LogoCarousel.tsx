@@ -36,12 +36,15 @@ export function LogoCarousel() {
             className="flex-shrink-0 px-12 transition-all duration-500 hover:scale-110"
           >
             <div className="h-12 flex items-center justify-center grayscale hover:grayscale-0 opacity-40 hover:opacity-100 transition-all duration-500">
-              <img 
-                src={logo.image_url} 
-                alt={logo.name} 
-                className="max-h-full max-w-[160px] object-contain"
-                title={logo.name}
-              />
+                <img 
+                  src={logo.image_url} 
+                  alt={logo.name} 
+                  className="max-h-full max-w-[160px] object-contain"
+                  title={logo.name}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'; // Hide broken logos
+                  }}
+                />
             </div>
           </div>
         ))}

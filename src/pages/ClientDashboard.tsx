@@ -28,6 +28,14 @@ export function ClientDashboard() {
 
   const loadProjects = useCallback(async () => {
     if (!user?.id) return;
+    
+    // Auth Guard
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     try {
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
@@ -36,7 +44,8 @@ export function ClientDashboard() {
           service:services(*)
         `)
         .eq('client_id', user?.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(signal);
 
       if (projectsError) throw projectsError;
 
@@ -76,7 +85,8 @@ export function ClientDashboard() {
       if (projectsFull.length === 1 && !selectedProject) {
         setSelectedProject(projectsFull[0]);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') return;
       console.error('Error loading projects:', getErrorMessage(error));
     } finally {
       setLoading(false);
@@ -91,6 +101,9 @@ export function ClientDashboard() {
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedProject) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
 
     setSendingMessage(true);
     try {
@@ -123,6 +136,9 @@ export function ClientDashboard() {
 
     setUploadingFile(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Sessão inválida');
+
       const fileName = `${selectedProject.id}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from('project-attachments')

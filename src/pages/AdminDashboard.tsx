@@ -228,6 +228,9 @@ export function AdminDashboard() {
 
   const handleSaveProject = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
       if (editingProject) {
         await supabase
           .from('projects')
@@ -253,6 +256,9 @@ export function AdminDashboard() {
 
   const loadProjectSteps = async (projectId: string) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
       const { data, error } = await supabase
         .from('project_steps')
         .select('*')
@@ -299,6 +305,9 @@ export function AdminDashboard() {
 
   const loadProjectMessages = async (projectId: string) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
       const { data, error } = await supabase
         .from('messages')
         .select(`
@@ -316,6 +325,10 @@ export function AdminDashboard() {
 
   const handleSendProjectMessage = async () => {
     if (!newProjectMessage.trim() || !selectedProjectForChat) return;
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
+
     setSendingProjectMessage(true);
     try {
       const { error } = await supabase.from('messages').insert({

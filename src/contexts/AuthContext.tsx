@@ -28,40 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    let timeoutId: NodeJS.Timeout;
-
-    // Safety timeout to prevent infinite loading screens
-    const safetyTimeout = () => {
-      timeoutId = setTimeout(() => {
-        if (mounted && loading) {
-          console.warn('[Auth Context] Initialization timed out - forcing ready state');
-          setLoading(false);
-        }
-      }, 8000);
-    };
-
-    safetyTimeout();
-
-    const loadProfile = async (userId: string) => {
-      if (!userId) {
-        if (mounted) setLoading(false);
-        return;
-      }
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-
-        if (error) throw error;
-        if (mounted) setProfile(data || null);
-      } catch (err) {
-        console.error('[Auth Context] Error loading profile:', err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
 
     const initAuth = async () => {
       try {
@@ -76,39 +42,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(sessionUser);
 
         if (sessionUser) {
-          await loadProfile(sessionUser.id);
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', sessionUser.id)
+            .maybeSingle();
+            
+          if (mounted) setProfile(data || null);
         } else {
           setProfile(null);
-          setLoading(false);
         }
       } catch (err) {
         console.error('[Auth Context] Initialization error:', err);
         if (mounted) {
           setUser(null);
           setProfile(null);
-          setLoading(false);
         }
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
 
-    const subscription = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
       const sessionUser = session?.user ?? null;
       
       setUser(sessionUser);
+      setLoading(true);
+
       if (sessionUser) {
-        await loadProfile(sessionUser.id);
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', sessionUser.id)
+          .maybeSingle();
+          
+        if (mounted) {
+          setProfile(data || null);
+          setLoading(false);
+        }
       } else {
-        setProfile(null);
-        setLoading(false);
+        if (mounted) {
+          setProfile(null);
+          setLoading(false);
+        }
       }
-    }).data.subscription;
+    });
 
     initAuth();
 
     return () => {
       mounted = false;
-      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
@@ -193,13 +177,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = profile?.role === 'admin';
 
   const reloadProfile = async () => {
-    if (user) {
-      try {
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-        if (data) setProfile(data);
-      } catch (err) {
-        console.error('[Auth Context] Profile reload error:', err);
-      }
+    // Golden Rule: Guard against missing session/token
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token || !user) return;
+
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      if (data) setProfile(data);
+    } catch (err) {
+      console.error('[Auth Context] Profile reload error:', err);
     }
   };
 

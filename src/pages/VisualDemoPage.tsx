@@ -11,17 +11,20 @@ export function VisualDemoPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchItem = async () => {
       try {
         const { data, error } = await supabase
           .from('portfolio')
           .select('*')
+          .abortSignal(controller.signal)
           .eq('id', id)
           .single();
 
         if (error) throw error;
         setItem(data);
-      } catch (err) {
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
         console.error('Erro ao carregar item:', err);
       } finally {
         setLoading(false);
@@ -29,6 +32,7 @@ export function VisualDemoPage() {
     };
 
     if (id) fetchItem();
+    return () => controller.abort();
   }, [id]);
 
   if (loading) {
@@ -137,7 +141,7 @@ export function VisualDemoPage() {
               alt={item.title}
               className="w-full h-auto block"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1200';
+                (e.target as HTMLImageElement).src = 'https://placehold.co/1200x800/e2e8f0/1e293b?text=Imagem+Indisponivel';
               }}
             />
           </div>

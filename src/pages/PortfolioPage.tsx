@@ -31,22 +31,26 @@ export function PortfolioPage() {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
 
   useEffect(() => {
-    loadPortfolio();
+    const controller = new AbortController();
+    loadPortfolio(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const loadPortfolio = async () => {
+  const loadPortfolio = async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       
       const { data, error } = await supabase
         .from("portfolio")
         .select("*")
+        .abortSignal(signal || new AbortController().signal)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       setPortfolioItems(data || []);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') return;
       console.error("[Portfolio] Error loading portfolio items:", error);
     } finally {
       setLoading(false);
@@ -114,8 +118,8 @@ export function PortfolioPage() {
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      if (!target.src.includes('unsplash-placeholder')) {
-                        target.src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800&fallback=portfolio';
+                      if (!target.src.includes('placehold.co')) {
+                        target.src = 'https://placehold.co/800x600/e2e8f0/1e293b?text=Imagem+Indisponivel';
                         target.dataset.error = 'true';
                       }
                     }}

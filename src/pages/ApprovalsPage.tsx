@@ -96,15 +96,22 @@ export default function ApprovalsPage() {
   const handlePasswordAction = async (requestId: string, action: 'approve' | 'reject') => {
     if (!confirm(action === 'approve' ? 'Gerar senha temporária?' : 'Rejeitar solicitação?')) return;
     setActionLoading(requestId);
+    const controller = new AbortController();
+    
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Sessão inválida. Recarregue a página.");
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-password-reset`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ requestId, action }),
+        signal: controller.signal
       });
 
       const result = await response.json();
@@ -119,7 +126,9 @@ export default function ApprovalsPage() {
       }
 
     } catch (error: any) {
-      showToast(`Erro: ${error.message}`, 'error');
+      if (error.name !== 'AbortError') {
+         showToast(`Erro: ${error.message}`, 'error');
+      }
     } finally {
       setActionLoading(null);
     }
