@@ -33,6 +33,27 @@ type Tab = 'overview' | 'projects' | 'clients' | 'messages' | 'quotes' | 'infopr
 export function AdminDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+
+  // Handle URL params for tab switching (e.g. returning from GSC Auth)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const connected = params.get('connected');
+    
+    if (tab && [
+      'overview', 'projects', 'clients', 'messages', 'quotes', 
+      'infoproducts', 'portfolio', 'blog', 'logos', 'services', 
+      'checkout_config', 'traffic', 'seo_admin'
+    ].includes(tab)) {
+      setActiveTab(tab as Tab);
+    }
+
+    if (connected === 'true') {
+      showToast('GSC Conectado com sucesso!', 'success');
+      // Clean URL
+      window.history.replaceState({}, '', `/admin?tab=${tab || 'traffic'}`);
+    }
+  }, []);
   
   const {
     projects,
