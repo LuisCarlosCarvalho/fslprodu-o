@@ -36,9 +36,19 @@ export function FileUpload({ files, onFilesChange, maxSizeMB = 5, onUploadStatus
               const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
               const filePath = `quote-attachments/${fileName}`;
 
-              const { error: uploadError } = await supabase.storage
+              // Create a timeout promise
+              const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Upload timeout')), 30000)
+              );
+
+              const uploadPromise = supabase.storage
                   .from('quotes')
                   .upload(filePath, file);
+
+              const { error: uploadError } = await Promise.race([
+                uploadPromise,
+                timeoutPromise
+              ]) as any;
 
               if (uploadError) throw uploadError;
 
@@ -47,9 +57,11 @@ export function FileUpload({ files, onFilesChange, maxSizeMB = 5, onUploadStatus
                   .getPublicUrl(filePath);
 
               newUrls.push(publicUrl);
-          } catch (error) {
+          } catch (error: any) {
               console.error('Erro no upload:', error);
-              // Don't alert here to avoid spamming alerts, just log
+              if (error.message === 'Upload timeout') {
+                alert('O upload demorou muito. Verifique sua conexão.');
+              }
           }
       }
 
