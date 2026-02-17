@@ -540,11 +540,60 @@ export function ServicesPage() {
                       {currentStep === 1 ? 'CANCELAR' : 'VOLTAR'}
                     </button>
                     
-                    <div className="flex gap-4 w-full md:w-auto">
+                  <div className="flex gap-4 w-full md:w-auto">
                       {currentStep < 3 ? (
                         <button
                           type="button"
-                          onClick={() => setCurrentStep(prev => prev + 1)}
+                          onClick={() => {
+                            // Validation Logic
+                            if (currentStep === 1) {
+                              if (!formData.company_name || !formData.requester_name || !formData.email || !formData.phone) {
+                                showToast('Por favor, preencha todos os campos obrigatórios da Identificação.', 'error');
+                                return;
+                              }
+                            }
+                            
+                            if (currentStep === 2) {
+                              const sName = selectedService.toLowerCase();
+                              const details = formData.service_details as any;
+                              
+                              // Website Validation
+                              if ((sName.includes('site') || sName.includes('web')) && !details.site_type) {
+                                showToast('Por favor, selecione o Tipo de Site.', 'error');
+                                return;
+                              }
+
+                              // Logo Validation
+                              if (sName.includes('logo') && (!details.brand_name || !details.business_segment || !details.public_target)) {
+                                showToast('Por favor, preencha todos os campos obrigatórios da Logo.', 'error');
+                                return;
+                              }
+
+                              // Traffic Validation
+                              if ((sName.includes('tráfego') || sName.includes('trafego')) && (!details.budget_range || !details.objective)) {
+                                showToast('Por favor, preencha o Investimento e Objetivo.', 'error');
+                                return;
+                              }
+
+                              // SEO Validation
+                              if (sName.includes('seo') && (!details.website_url || !details.seo_scope || !details.budget_range)) {
+                                showToast('Por favor, preencha URL, Abrangência e Orçamento.', 'error');
+                                return;
+                              }
+
+                              // Custom Project Validation
+                              const isCustom = !sName.includes('site') && !sName.includes('web') && 
+                                             !sName.includes('logo') && !sName.includes('tráfego') && 
+                                             !sName.includes('trafego') && !sName.includes('seo');
+                              
+                              if (isCustom && !details.project_description) {
+                                showToast('Por favor, descreva o seu projeto.', 'error');
+                                return;
+                              }
+                            }
+
+                            setCurrentStep(prev => prev + 1);
+                          }}
                           className="w-full md:w-auto bg-blue-600 text-white px-12 py-4 rounded-2xl font-black hover:bg-blue-700 transition-all uppercase tracking-widest text-sm shadow-xl shadow-blue-100"
                         >
                           PRÓXIMO PASSO
