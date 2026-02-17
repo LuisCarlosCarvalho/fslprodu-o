@@ -91,7 +91,13 @@ export function TrafficAnalysisTab() {
                 GSC: {connectedEmail || 'Conectado'}
               </div>
               <button 
-                onClick={() => GSCService.disconnectGoogle()}
+                onClick={async () => {
+                  const success = await GSCService.disconnectGoogle();
+                  if (success) {
+                    setIsConnectedGSC(false);
+                    setConnectedEmail(null);
+                  }
+                }}
                 className="text-[10px] text-red-500 hover:text-red-700 underline font-medium px-2"
               >
                 Desconectar e trocar conta

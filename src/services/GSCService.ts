@@ -40,16 +40,14 @@ export const GSCService = {
    */
   async disconnectGoogle() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) return false;
     
     const { error } = await supabase
       .from('google_integrations')
       .delete()
       .eq('user_id', user.id);
       
-    if (!error) {
-      window.location.reload();
-    }
+    return !error;
   },
 
   /**
