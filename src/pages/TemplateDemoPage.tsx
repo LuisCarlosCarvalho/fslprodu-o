@@ -110,7 +110,10 @@ export function TemplateDemoPage() {
               alt="Widget Image" 
               className="max-w-full h-auto rounded-lg inline-block"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x600?text=Imagem+da+Demo';
+                const target = e.currentTarget;
+                if (!target.src.includes('placeholder.com')) {
+                  target.src = 'https://via.placeholder.com/800x600?text=Imagem+da+Demo';
+                }
               }}
             />
           </div>

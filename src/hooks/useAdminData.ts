@@ -91,6 +91,18 @@ export function useAdminData(activeTab: string) {
         
         if (clientsError) throw clientsError;
         setClients(clientsData || []);
+
+        // Fetch projects to check which clients have them
+        const { data: projectsData } = await supabase
+          .from('projects')
+          .select(`
+            *,
+            client:profiles!client_id(*),
+            service:services(*)
+          `)
+          .order('created_at', { ascending: false })
+          .abortSignal(signal);
+        setProjects(projectsData || []);
       } else if (activeTab === 'quotes' || activeTab === 'messages') {
         const { data: quotesData, error: quotesError } = await supabase
           .from('quote_requests')
@@ -99,6 +111,23 @@ export function useAdminData(activeTab: string) {
           .abortSignal(signal);
           
         if (quotesError) throw quotesError;
+        
+        // Fetch messages for these quotes separately to avoid relationship cache issues
+        const quoteIds = (quotesData || []).map(q => q.id);
+        if (quoteIds.length > 0) {
+          const { data: messagesData } = await supabase
+            .from('quote_messages')
+            .select('*')
+            .in('quote_id', quoteIds)
+            .order('created_at', { ascending: true });
+          
+          if (messagesData) {
+            quotesData.forEach(q => {
+              q.messages = messagesData.filter(m => m.quote_id === q.id);
+            });
+          }
+        }
+        
         setQuotes(quotesData || []);
       } else if (activeTab === 'infoproducts') {
         const { data: productsData } = await supabase

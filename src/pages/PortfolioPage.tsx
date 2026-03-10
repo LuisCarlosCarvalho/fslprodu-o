@@ -128,10 +128,9 @@ export function PortfolioPage() {
                     decoding="async"
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                     onError={(e) => {
-                      const target = e.target as HTMLImageElement;
+                      const target = e.currentTarget;
                       if (!target.src.includes('placehold.co')) {
                         target.src = 'https://placehold.co/800x600/e2e8f0/1e293b?text=Imagem+Indisponivel';
-                        target.dataset.error = 'true';
                       }
                     }}
                   />

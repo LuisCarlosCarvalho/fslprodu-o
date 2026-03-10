@@ -67,7 +67,10 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
           className="w-full h-full object-cover transition-transform duration-200 ease-out"
           style={zoomStyle}
           onError={(e) => {
-            e.currentTarget.src = "https://placehold.co/600x600/e2e8f0/1e293b?text=Sem+Imagem";
+            const target = e.currentTarget;
+            if (!target.src.includes('placehold.co')) {
+              target.src = "https://placehold.co/600x600/e2e8f0/1e293b?text=Sem+Imagem";
+            }
           }}
         />
 
@@ -112,7 +115,10 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
                 alt={`Thumbnail ${idx + 1}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.src = "https://placehold.co/100x100/e2e8f0/1e293b?text=Erro";
+                  const target = e.currentTarget;
+                  if (!target.src.includes('placehold.co')) {
+                    target.src = "https://placehold.co/100x100/e2e8f0/1e293b?text=Erro";
+                  }
                 }}
               />
             </button>

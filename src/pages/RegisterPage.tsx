@@ -171,7 +171,7 @@ export function RegisterPage() {
 
   if (!nationality) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-20 px-4 bg-gradient-to-br from-blue-50 to-white">
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-20 px-4 bg-gradient-to-br from-blue-50 to-white">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Bem-vindo</h1>
           <p className="text-gray-600 mb-8">Selecione sua nacionalidade para começar</p>
@@ -213,7 +213,7 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-white">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-white">
       <div className="max-w-2xl w-full">
         <button 
           onClick={() => setNationality(null)}

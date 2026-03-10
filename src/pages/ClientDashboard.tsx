@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { showToast } from '../components/ui/Toast';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, Project, Service, Message, ProjectStep } from '../lib/supabase';
+import { supabase, Project, Service, Message, ProjectStep, QuoteRequest } from '../lib/supabase';
 import { getErrorMessage } from '../lib/errors';
 import { 
   FolderOpen, MessageSquare, Send, Clock, 
@@ -22,6 +22,7 @@ export function ClientDashboard() {
   const [selectedProject, setSelectedProject] = useState<ProjectWithService | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'progress' | 'messages' | 'files' | 'finance'>('overview');
   const [newMessage, setNewMessage] = useState('');
+  const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -81,6 +82,32 @@ export function ClientDashboard() {
 
       setProjects(projectsFull);
       
+      // Load quotes if no projects or just to have them
+      if (user?.email) {
+        const { data: quotesData } = await supabase
+          .from('quote_requests')
+          .select('*')
+          .eq('email', user.email)
+          .order('created_at', { ascending: false });
+        
+        if (quotesData && quotesData.length > 0) {
+          const quoteIds = quotesData.map(q => q.id);
+          const { data: messagesData } = await supabase
+            .from('quote_messages')
+            .select('*')
+            .in('quote_id', quoteIds)
+            .order('created_at', { ascending: true });
+          
+          if (messagesData) {
+            quotesData.forEach(q => {
+              q.messages = messagesData.filter(m => m.quote_id === q.id);
+            });
+          }
+        }
+        
+        setQuotes(quotesData || []);
+      }
+
       // Auto-select if only one project exists and none is selected
       if (projectsFull.length === 1 && !selectedProject) {
         setSelectedProject(projectsFull[0]);

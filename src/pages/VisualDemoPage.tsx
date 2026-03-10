@@ -141,7 +141,10 @@ export function VisualDemoPage() {
               alt={item.title}
               className="w-full h-auto block"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://placehold.co/1200x800/e2e8f0/1e293b?text=Imagem+Indisponivel';
+                const target = e.currentTarget;
+                if (!target.src.includes('placehold.co')) {
+                  target.src = 'https://placehold.co/1200x800/e2e8f0/1e293b?text=Imagem+Indisponivel';
+                }
               }}
             />
           </div>

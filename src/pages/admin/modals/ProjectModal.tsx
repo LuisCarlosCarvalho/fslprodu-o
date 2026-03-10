@@ -6,6 +6,7 @@ interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingProject: Project | null;
+  isClientLocked?: boolean;
   projectForm: any;
   setProjectForm: (form: any) => void;
   handleSaveProject: () => Promise<void>;
@@ -19,6 +20,7 @@ export function ProjectModal({
   isOpen,
   onClose,
   editingProject,
+  isClientLocked = false,
   projectForm,
   setProjectForm,
   handleSaveProject,
@@ -43,7 +45,10 @@ export function ProjectModal({
             <select
               value={projectForm.client_id}
               onChange={(e) => setProjectForm({ ...projectForm, client_id: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg"
+              className={`w-full px-4 py-2 border rounded-lg ${
+                isClientLocked ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''
+              }`}
+              disabled={isClientLocked}
             >
               <option value="">Selecione um cliente</option>
               {clients.map((client) => (

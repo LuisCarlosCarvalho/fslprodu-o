@@ -68,8 +68,36 @@ export function MessagesTab({ messages, onReply }: MessagesTabProps) {
               </div>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <p className="text-sm text-gray-700 italic">"{msg.message}"</p>
+            <div className="bg-gray-50 p-4 rounded-lg mb-6 max-h-48 overflow-y-auto space-y-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black text-blue-600 uppercase">Solicitação Inicial:</span>
+                <p className="text-sm text-gray-700 italic">"{msg.message}"</p>
+              </div>
+
+              {msg.messages && msg.messages.length > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                  <span className="text-[10px] font-black text-green-600 uppercase mb-2 block">Histórico de Respostas:</span>
+                  <div className="space-y-3">
+                    {msg.messages.map((reply) => (
+                      <div key={reply.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[10px] font-bold text-gray-900">{reply.sender_name}</span>
+                          <span className="text-[9px] text-gray-400">{new Date(reply.created_at).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p className="text-xs text-gray-700">{reply.message}</p>
+                        <div className="mt-1 flex justify-end">
+                           <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                             reply.channel === 'whatsapp' ? 'bg-green-100 text-green-600' : 
+                             reply.channel === 'email' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
+                           }`}>
+                             Via {reply.channel}
+                           </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2">
@@ -78,7 +106,7 @@ export function MessagesTab({ messages, onReply }: MessagesTabProps) {
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-bold shadow-sm"
               >
                 <Reply size={16} />
-                Responder
+                Nova Resposta
               </button>
             </div>
           </div>

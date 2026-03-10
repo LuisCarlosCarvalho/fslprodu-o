@@ -121,6 +121,16 @@ export type MarketingProduct = {
   };
 };
 
+export type QuoteMessage = {
+  id: string;
+  quote_id: string;
+  sender_id: string | null;
+  sender_name: string;
+  message: string;
+  channel: 'whatsapp' | 'email' | 'direct';
+  created_at: string;
+};
+
 export type QuoteRequest = {
   id: string;
   name: string;
@@ -135,6 +145,8 @@ export type QuoteRequest = {
   company_name?: string;
   region?: string;
   contact_method?: string;
+  internal_notes?: string;
+  messages?: QuoteMessage[];
   created_at: string;
 };
 

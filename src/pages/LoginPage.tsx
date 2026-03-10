@@ -21,24 +21,19 @@ export function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
       const { error: signInError } = await signIn(email, password);
-
-      if (signInError) {
-        throw signInError;
-      }
-
+      if (signInError) throw signInError;
       navigate('/dashboard');
     } catch (err: unknown) {
-      setError(getErrorMessage(err) || 'Erro ao fazer login. Verifique suas credenciais.');
+      setError(getErrorMessage(err) || 'Erro ao fazer login.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-white">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-white">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Bem-vindo de Volta</h1>

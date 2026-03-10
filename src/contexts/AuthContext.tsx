@@ -29,67 +29,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const initAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+    // Use onAuthStateChange for both initial session and subsequent changes
+    // This is more stable as Supabase triggers INITIAL_SESSION automatically
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
 
-        if (!mounted) return;
+      const sessionUser = session?.user ?? null;
+      
+      // Only set loading(true) for specific identity-changing events to prevent flicker
+      // background token refreshes shouldn't trigger a full UI reload/spinner
+      const isCriticalEvent = ['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'TOKEN_REFRESHED'].includes(event);
+      if (isCriticalEvent && !sessionUser) {
+         setLoading(true);
+      }
 
-        const sessionUser = session?.user ?? null;
-        
-        // Sequence: setUser -> loadProfile -> setLoading(false)
-        setUser(sessionUser);
+      // 1. Set user immediately
+      setUser(sessionUser);
 
-        if (sessionUser) {
-          const { data } = await supabase
+      // 2. Load profile if we have a user
+      if (sessionUser) {
+        try {
+          const { data, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', sessionUser.id)
             .maybeSingle();
             
+          if (error) throw error;
           if (mounted) setProfile(data || null);
-        } else {
-          setProfile(null);
-        }
-      } catch (err) {
-        console.error('[Auth Context] Initialization error:', err);
-        if (mounted) {
-          setUser(null);
-          setProfile(null);
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return;
-      const sessionUser = session?.user ?? null;
-      
-      setUser(sessionUser);
-      setLoading(true);
-
-      if (sessionUser) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', sessionUser.id)
-          .maybeSingle();
-          
-        if (mounted) {
-          setProfile(data || null);
-          setLoading(false);
+        } catch (err) {
+          console.error('[Auth Context] Profile load error:', err);
+          if (mounted) setProfile(null);
         }
       } else {
-        if (mounted) {
-          setProfile(null);
-          setLoading(false);
-        }
+        if (mounted) setProfile(null);
       }
-    });
 
-    initAuth();
+      // 3. Finalize loading state
+      if (mounted) setLoading(false);
+    });
 
     return () => {
       mounted = false;

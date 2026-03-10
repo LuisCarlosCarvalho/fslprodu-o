@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { QuoteRequest } from '../../../types';
-import { ExternalLink, FileText, ChevronRight, MessageSquare, Paperclip, Building, Globe, Search } from 'lucide-react';
+import { ExternalLink, FileText, MessageSquare, Paperclip, Building, Globe, Search, Save, Mail } from 'lucide-react';
 
 type QuotesTabProps = {
   quotes: QuoteRequest[];
   onUpdateStatus: (id: string, status: string) => void;
+  onUpdateNotes: (id: string, notes: string) => void;
 };
 
-export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
+export function QuotesTab({ quotes, onUpdateStatus, onUpdateNotes }: QuotesTabProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingNotes, setEditingNotes] = useState<Record<string, string>>({});
 
   const filteredQuotes = quotes.filter(quote => 
     quote.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -20,8 +22,6 @@ export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
   );
 
   const translations: Record<string, string> = {
-// ... (rest of translations)
-// (keeping the rest of the file logic same)
     // Gerais e Website
     deadline: 'Prazo Estimado:',
     needs_seo: 'Precisa de SEO:',
@@ -33,7 +33,7 @@ export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
     needs_hosting: 'Precisa de Hospedagem:',
     needs_maintenance: 'Plano de Manutenção:',
     
-    // Logo e Branding (conforme print)
+    // Logo e Branding
     slogan: 'Slogan:',
     brand_personality: 'Personalidade da Marca:',
     website: 'Web-Site:',
@@ -86,6 +86,12 @@ export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
     if (typeof val === 'boolean') return val ? 'Sim' : 'Não';
     if (typeof val === 'string' && valueTranslations[val.toLowerCase()]) return valueTranslations[val.toLowerCase()];
     return val;
+  };
+
+  const handleWhatsApp = (phone: string | null) => {
+    if (!phone) return;
+    const cleanPhone = phone.replace(/\D/g, '');
+    window.open(`https://wa.me/${cleanPhone}`, '_blank');
   };
 
   return (
@@ -143,14 +149,17 @@ export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600 font-medium">
-                    <MessageSquare size={16} className="text-blue-500" />
+                  <a href={`mailto:${quote.email}`} className="flex items-center gap-2 text-gray-600 font-medium hover:text-blue-600 transition-colors">
+                    <Mail size={16} className="text-blue-500" />
                     {quote.email}
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600 font-medium">
-                    <ChevronRight size={16} className="text-blue-500" />
+                  </a>
+                  <button 
+                    onClick={() => handleWhatsApp(quote.phone)}
+                    className="flex items-center gap-2 text-gray-600 font-medium hover:text-green-600 transition-colors"
+                  >
+                    <MessageSquare size={16} className="text-green-500" />
                     {quote.phone || 'Sem telefone'}
-                  </div>
+                  </button>
                   {quote.company_name && (
                     <div className="flex items-center gap-2 text-gray-600 font-medium">
                       <Building size={16} className="text-blue-500" />
@@ -171,7 +180,7 @@ export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
               </div>
 
               <div className="flex flex-col gap-2 min-w-[200px]">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alterar Status</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Alterar Status</label>
                 <select
                   value={quote.status}
                   onChange={(e) => onUpdateStatus(quote.id, e.target.value)}
@@ -204,7 +213,6 @@ export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
                 {quote.service_details && Object.keys(quote.service_details).length > 0 ? (
                   <div className="flex flex-wrap gap-4">
                     {Object.entries(quote.service_details).map(([key, val]) => {
-                      // Determine width based on key or value length for a dynamic layout
                       const isLong = String(val).length > 30 || key.includes('slogan') || key.includes('personality') || key.includes('colors');
                       return (
                         <div key={key} className={`flex flex-col ${isLong ? 'w-full md:flex-1 min-w-[300px]' : 'w-fit min-w-[150px]'}`}>
@@ -225,13 +233,24 @@ export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
 
               {/* Description Placeholder at bottom like in print */}
               <div className="space-y-4 pt-4 border-t border-gray-100">
-                <h4 className="text-[11px] font-bold text-blue-600 flex items-center gap-1">
-                  Descrição Complementar &gt;
-                </h4>
-                <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-inner min-h-[150px] text-gray-400 italic text-sm">
-                  {/* Espaço reservado para notas administrativas ou detalhes extras se houver */}
-                  Este campo pode ser usado para anotações internas após o contato.
+                <div className="flex justify-between items-center">
+                  <h4 className="text-[11px] font-bold text-blue-600 flex items-center gap-1 uppercase tracking-widest">
+                    Anotações Internas
+                  </h4>
+                  <button
+                    onClick={() => onUpdateNotes(quote.id, editingNotes[quote.id] ?? quote.internal_notes ?? '')}
+                    className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                  >
+                    <Save size={14} />
+                    Salvar
+                  </button>
                 </div>
+                <textarea
+                  value={editingNotes[quote.id] ?? quote.internal_notes ?? ''}
+                  onChange={(e) => setEditingNotes(prev => ({ ...prev, [quote.id]: e.target.value }))}
+                  placeholder="Este campo pode ser usado para anotações internas após o contato..."
+                  className="w-full bg-white p-6 rounded-2xl border border-gray-200 shadow-inner min-h-[150px] text-gray-800 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-300"
+                />
               </div>
             </div>
 

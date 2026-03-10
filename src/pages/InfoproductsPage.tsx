@@ -79,7 +79,10 @@ export function InfoproductsPage() {
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://placehold.co/800x600/e2e8f0/1e293b?text=Marketing';
+                        const target = e.currentTarget;
+                        if (!target.src.includes('placehold.co')) {
+                          target.src = 'https://placehold.co/800x600/e2e8f0/1e293b?text=Marketing';
+                        }
                       }}
                     />
                    ) : product.image_url ? (
@@ -88,7 +91,10 @@ export function InfoproductsPage() {
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://placehold.co/800x600/e2e8f0/1e293b?text=Marketing';
+                        const target = e.currentTarget;
+                        if (!target.src.includes('placehold.co')) {
+                          target.src = 'https://placehold.co/800x600/e2e8f0/1e293b?text=Marketing';
+                        }
                       }}
                     />
                   ) : (

@@ -39,7 +39,7 @@ import { ServiceModal } from './admin/modals/ServiceModal';
 type Tab = 'overview' | 'projects' | 'clients' | 'messages' | 'quotes' | 'infoproducts' | 'portfolio' | 'blog' | 'logos' | 'services' | 'checkout_config' | 'traffic' | 'seo_admin';
 
 export function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
   // Handle URL params for tab switching (e.g. returning from GSC Auth)
@@ -155,6 +155,7 @@ export function AdminDashboard() {
     loadPaymentSettings();
   }, [activeTab]); // Recarrega se mudar de aba (ex: voltou da aba de config)
   const [isMessageEdited, setIsMessageEdited] = useState(false);
+  const [isClientLocked, setIsClientLocked] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editingMarketingProduct, setEditingMarketingProduct] = useState<MarketingProduct | null>(null);
   const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
@@ -421,9 +422,14 @@ export function AdminDashboard() {
   };
 
   const handleDeleteMarketingProduct = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este produto?')) {
-      await supabase.from('marketing_products').delete().eq('id', id);
+    try {
+      const { error } = await supabase.from('marketing_products').delete().eq('id', id);
+      if (error) throw error;
       loadData();
+      showToast('Produto excluído com sucesso!', 'success');
+    } catch (error) {
+      console.error('Error deleting product:', getErrorMessage(error));
+      showToast('Erro ao excluir produto.', 'error');
     }
   };
 
@@ -434,111 +440,76 @@ export function AdminDashboard() {
   };
 
   const handleSavePortfolio = async () => {
+    if (!portfolioForm.title || !portfolioForm.image_url) {
+      showToast('Título e URL da imagem são obrigatórios!', 'error');
+      return;
+    }
+
     try {
       if (editingPortfolio) {
-        await supabase
+        const { error } = await supabase
           .from('portfolio')
           .update(portfolioForm)
           .eq('id', editingPortfolio.id);
+        if (error) throw error;
       } else {
-        await supabase.from('portfolio').insert([portfolioForm]);
+        const { error } = await supabase.from('portfolio').insert([portfolioForm]);
+        if (error) throw error;
       }
       setShowPortfolioModal(false);
       setEditingPortfolio(null);
       loadData();
+      showToast('Projeto salvo com sucesso!', 'success');
     } catch (error) {
       console.error('Error saving portfolio:', getErrorMessage(error));
+      showToast('Erro ao salvar projeto do portfólio.', 'error');
     }
   };
 
   const handleDeletePortfolio = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir este projeto do portfolio?')) {
-      await supabase.from('portfolio').delete().eq('id', id);
-      loadData();
+      try {
+        const { error } = await supabase.from('portfolio').delete().eq('id', id);
+        if (error) throw error;
+        loadData();
+        showToast('Projeto excluído do portfólio!', 'success');
+      } catch (error) {
+        console.error('Error deleting portfolio:', getErrorMessage(error));
+        showToast('Erro ao excluir projeto do portfólio.', 'error');
+      }
     }
   };
 
   const updateQuoteStatus = async (id: string, status: string) => {
     try {
-      if (status === 'converted') {
-        // 1. Buscar detalhes do orçamento
-        const { data: quote, error: quoteError } = await supabase
-          .from('quote_requests')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (quoteError || !quote) throw new Error('Orçamento não encontrado');
-
-        // 2. Verificar se o cliente já existe
-        let { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', quote.email)
-          .single();
-
-        let clientId = profile?.id;
-
-        // 3. Se não existe, criar perfil básico
-        if (!clientId) {
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert([{
-              full_name: quote.name,
-              email: quote.email,
-              phone: quote.phone,
-              country: quote.region === 'Portugal' ? 'Portugal' : 'Brasil',
-              nationality: quote.region === 'Portugal' ? 'PT' : 'BR',
-              address: 'Criado via orçamento'
-            }])
-            .select()
-            .single();
-
-          if (createError) throw createError;
-          clientId = newProfile.id;
-        }
-
-        // 4. Mapear serviço (Map string to ID)
-        const serviceMapping: Record<string, string> = {
-          'Criação de Sites': 'f58e6bc9-9a32-4a3c-bae2-54420df16f9f',
-          'Desenvolvimento Web': 'f58e6bc9-9a32-4a3c-bae2-54420df16f9f',
-          'Criação de Logos': '97ad841f-a951-46d9-8c99-de7f596ec720',
-          'Design Gráfico': '97ad841f-a951-46d9-8c99-de7f596ec720',
-          'Gerenciamento de Tráfego': 'cab63349-5d99-402e-94a0-c0f63dca0843',
-          'Tráfego Pago': 'cab63349-5d99-402e-94a0-c0f63dca0843',
-          'SEO de Gestão': '1600dd80-b4c0-484a-9659-3edf62d75235',
-          'Projeto Personalizado': '8fd5a4c2-4a08-4fc4-88b5-c31906e0456e'
-        };
-
-        const serviceId = serviceMapping[quote.service_type || ''] || '8fd5a4c2-4a08-4fc4-88b5-c31906e0456e';
-
-        // 5. Criar Projeto
-        const { error: projectError } = await supabase
-          .from('projects')
-          .insert([{
-            client_id: clientId,
-            service_id: serviceId,
-            project_name: `${quote.company_name || quote.name} - ${quote.os_number || 'Projeto'}`,
-            status: 'pending',
-            progress_percentage: 0,
-            start_date: new Date().toISOString().split('T')[0],
-            notes: `Convertido de orçamento: ${quote.service_type}. Mensagem original: ${quote.message || ''}`
-          }]);
-
-        if (projectError) throw projectError;
-        showToast('Orçamento convertido em Projeto com sucesso!', 'success');
-      }
-
+      // Simple status update
       const { error: updateError } = await supabase
         .from('quote_requests')
         .update({ status })
         .eq('id', id);
 
       if (updateError) throw updateError;
+      showToast('Status atualizado com sucesso!', 'success');
       loadData();
     } catch (error: any) {
-      console.error('Erro na conversão:', error);
+      console.error('Erro ao atualizar status:', error);
       showToast('Erro ao atualizar status: ' + (error.message || 'Erro inesperado'), 'error');
+    }
+  };
+
+  const updateQuoteNotes = async (id: string, notes: string) => {
+    try {
+      const { error } = await supabase
+        .from('quote_requests')
+        .update({ internal_notes: notes })
+        .eq('id', id);
+
+      if (error) throw error;
+      showToast('Anotações salvas com sucesso!', 'success');
+      loadData();
+    } catch (error: any) {
+      console.error('Erro ao salvar notas:', error);
+      showToast('Erro ao salvar anotações.', 'error');
     }
   };
 
@@ -640,6 +611,15 @@ export function AdminDashboard() {
       
       window.open(url, '_blank');
       
+      // Auto-log message in quote_messages
+      await supabase.from('quote_messages').insert({
+        quote_id: selectedMessage.id,
+        sender_id: user?.id,
+        sender_name: profile?.full_name || 'Admin',
+        message: replyForm.message,
+        channel: 'whatsapp'
+      });
+      
       // Update status to 'contacted'
       await updateQuoteStatus(selectedMessage.id, 'contacted');
       
@@ -667,6 +647,15 @@ export function AdminDashboard() {
       const url = `mailto:${selectedMessage.email}?subject=${subject}&body=${body}`;
       
       window.location.href = url;
+      
+      // Auto-log message in quote_messages
+      await supabase.from('quote_messages').insert({
+        quote_id: selectedMessage.id,
+        sender_id: user?.id,
+        sender_name: profile?.full_name || 'Admin',
+        message: replyForm.message,
+        channel: 'email'
+      });
       
       // Update status to 'contacted'
       await updateQuoteStatus(selectedMessage.id, 'contacted');
@@ -704,20 +693,29 @@ export function AdminDashboard() {
   }, [selectedMessage, replyForm.value, replyForm.observations, isMessageEdited]);
 
   const handleSaveService = async () => {
+    if (!serviceForm.name || !serviceForm.description) {
+      showToast('Nome e descrição são obrigatórios!', 'error');
+      return;
+    }
+
     try {
       if (editingService) {
-        await supabase
+        const { error } = await supabase
           .from('services')
           .update(serviceForm)
           .eq('id', editingService.id);
+        if (error) throw error;
       } else {
-        await supabase.from('services').insert([serviceForm]);
+        const { error } = await supabase.from('services').insert([serviceForm]);
+        if (error) throw error;
       }
       setShowServiceModal(false);
       setEditingService(null);
       loadData();
+      showToast('Serviço salvo com sucesso!', 'success');
     } catch (error) {
       console.error('Error saving service:', getErrorMessage(error));
+      showToast('Erro ao salvar serviço.', 'error');
     }
   };
 
@@ -842,8 +840,15 @@ export function AdminDashboard() {
 
   const handleDeleteService = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir este serviço?')) {
-      await supabase.from('services').delete().eq('id', id);
-      loadData();
+      try {
+        const { error } = await supabase.from('services').delete().eq('id', id);
+        if (error) throw error;
+        loadData();
+        showToast('Serviço excluído com sucesso!', 'success');
+      } catch (error) {
+        console.error('Error deleting service:', getErrorMessage(error));
+        showToast('Erro ao excluir serviço.', 'error');
+      }
     }
   };
 
@@ -1062,6 +1067,7 @@ export function AdminDashboard() {
                           payment_method: null,
                           card_fee_included: false,
                         });
+                        setIsClientLocked(false);
                         setShowProjectModal(true);
                     }}
                     onNewClient={() => {
@@ -1122,6 +1128,7 @@ export function AdminDashboard() {
                           payment_method: null,
                           card_fee_included: false,
                         });
+                        setIsClientLocked(false);
                         setShowProjectModal(true);
                     }}
                     onEditProject={(project) => {
@@ -1138,6 +1145,7 @@ export function AdminDashboard() {
                           payment_method: project.payment_method,
                           card_fee_included: project.card_fee_included || false,
                         });
+                        setIsClientLocked(false);
                         setShowProjectModal(true);
                     }}
                     onManageSteps={(project) => {
@@ -1225,8 +1233,29 @@ export function AdminDashboard() {
                     onViewProjects={(clientId) => {
                       const client = clients.find(c => c.id === clientId);
                       if (client) {
-                        setProjectSearch(client.email || client.full_name);
-                        setActiveTab('projects');
+                        const clientProjects = projects.filter(p => p.client_id === clientId);
+                        if (clientProjects.length > 0) {
+                          setProjectSearch(client.email || client.full_name);
+                          setActiveTab('projects');
+                        } else {
+                          // No projects: open modal to add one
+                          setEditingProject(null);
+                          setProjectForm({
+                            client_id: clientId,
+                            service_id: '',
+                            project_name: '',
+                            status: 'pending',
+                            progress_percentage: 0,
+                            notes: '',
+                            total_value: 0,
+                            payment_status: 'pending',
+                            payment_method: null,
+                            card_fee_included: false,
+                          });
+                          setIsClientLocked(true);
+                          setShowProjectModal(true);
+                          showToast(`O cliente ${client.full_name} ainda não possui projetos. Adicione o primeiro!`, 'info');
+                        }
                       }
                     }}
                   />
@@ -1236,6 +1265,7 @@ export function AdminDashboard() {
                   <QuotesTab 
                     quotes={quotes}
                     onUpdateStatus={updateQuoteStatus}
+                    onUpdateNotes={updateQuoteNotes}
                   />
                 )}
 
@@ -1420,6 +1450,7 @@ export function AdminDashboard() {
           setEditingProject(null);
         }}
         editingProject={editingProject}
+        isClientLocked={isClientLocked}
         projectForm={projectForm}
         setProjectForm={setProjectForm}
         handleSaveProject={handleSaveProject}

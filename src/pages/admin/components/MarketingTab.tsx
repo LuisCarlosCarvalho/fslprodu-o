@@ -1,4 +1,5 @@
-import { Plus, Edit, Trash2, CheckSquare } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckSquare, X, Check } from 'lucide-react';
+import { useState } from 'react';
 import { MarketingProduct } from '../../../types';
 
 type MarketingTabProps = {
@@ -16,6 +17,8 @@ export function MarketingTab({
   onDeleteProduct,
   onCopyLink,
 }: MarketingTabProps) {
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -64,27 +67,52 @@ export function MarketingTab({
               </div>
               
               <div className="flex gap-1">
-                <button
-                  onClick={() => onCopyLink(product.public_code)}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                  title="Copiar Link Público"
-                >
-                  <CheckSquare size={18} />
-                </button>
-                <button
-                  onClick={() => onEditProduct(product)}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                  title="Editar"
-                >
-                  <Edit size={18} />
-                </button>
-                <button
-                  onClick={() => onDeleteProduct(product.id)}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                  title="Excluir"
-                >
-                  <Trash2 size={18} />
-                </button>
+                {confirmDeleteId === product.id ? (
+                  <div className="flex items-center gap-1 bg-red-50 p-1 rounded-lg border border-red-100 animate-in fade-in zoom-in-95 duration-200">
+                    <span className="text-[10px] font-bold text-red-600 px-1">Excluir?</span>
+                    <button
+                      onClick={() => {
+                        onDeleteProduct(product.id);
+                        setConfirmDeleteId(null);
+                      }}
+                      className="p-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                      title="Confirmar Exclusão"
+                    >
+                      <Check size={14} />
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="p-1.5 bg-gray-200 text-gray-600 rounded hover:bg-gray-300 transition-colors"
+                      title="Cancelar"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => onCopyLink(product.public_code)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Copiar Link Público"
+                    >
+                      <CheckSquare size={18} />
+                    </button>
+                    <button
+                      onClick={() => onEditProduct(product)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Editar"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(product.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="Excluir"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             
