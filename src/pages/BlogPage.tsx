@@ -32,8 +32,21 @@ export function BlogPage() {
 
   if (loading) {
     return (
-      <div className="pt-32 pb-24 min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="pt-32 pb-24 min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-[32px] overflow-hidden border border-gray-100 animate-pulse">
+                <div className="aspect-[16/10] bg-gray-200" />
+                <div className="p-8 space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-1/4" />
+                  <div className="h-8 bg-gray-200 rounded w-3/4" />
+                  <div className="h-20 bg-gray-100 rounded w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -77,6 +90,8 @@ export function BlogPage() {
                   <img 
                     src={post.featured_image_url} 
                     alt={post.title} 
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                 </div>
