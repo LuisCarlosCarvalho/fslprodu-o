@@ -113,7 +113,7 @@ export function HomePage() {
           <h1 className="text-white mb-6 drop-shadow-2xl">
             Transforme sua <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Presença Digital</span>
           </h1>
-          <p className="text-xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-slate-300 mb-12 max-w-5xl mx-auto leading-relaxed whitespace-nowrap overflow-visible">
             FSL Solution: Inteligência analítica e design de alta performance para empresas que buscam resultados reais.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
