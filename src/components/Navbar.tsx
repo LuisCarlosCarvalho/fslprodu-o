@@ -8,9 +8,9 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="bg-white shadow-md fixed w-full top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+    <nav className="fixed w-full top-0 z-50 px-4 pt-4 pointer-events-none">
+      <div className="max-w-7xl mx-auto glass-card border-white/20 px-6 py-3 pointer-events-auto">
+        <div className="flex justify-between h-12">
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2 sm:gap-3">
               <img src="/logo.png" alt="FSL Solution" className="h-8 w-8 sm:h-10 sm:w-10" />

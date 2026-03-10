@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/app-icon.png" />
@@ -20,8 +20,44 @@
     <title>FSL Solution Digital | Marketing Inteligente</title>
 
   </head>
-  <body translate="no" class="notranslate">
+  <body translate="no" class="notranslate" style="font-family: sans-serif !important;">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Forçar unregistration do Service Worker para evitar cache de PWA durante manutenção
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+            console.log('Service Worker removido para atualização');
+          }
+        });
+      }
+
+      let lastHash = null;
+
+      async function checkForUpdates() {
+        try {
+          // Busca o index.html com timestamp para ignorar cache de rede
+          const response = await fetch('/?t=' + Date.now(), { cache: 'no-store' });
+          const text = await response.text();
+          
+          // Criar um hash simples do conteúdo (ou tamanho)
+          const currentHash = text.length;
+
+          if (lastHash !== null && currentHash !== lastHash) {
+            console.log("Mudança detectada! Recarregando...");
+            window.location.reload(true);
+          }
+          lastHash = currentHash;
+        } catch (e) {
+          console.error("Erro no auto-reload:", e);
+        }
+      }
+
+      // Verifica a cada 3 segundos
+      setInterval(checkForUpdates, 3000);
+      checkForUpdates(); // Executa a primeira vez
+    </script>
   </body>
 </html>

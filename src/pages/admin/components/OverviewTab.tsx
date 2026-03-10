@@ -8,9 +8,20 @@ type OverviewTabProps = {
     blogPosts: number;
   };
   loading: boolean;
+  onNewProject: () => void;
+  onNewClient: () => void;
+  onNewPost: () => void;
+  onViewMessages: () => void;
 };
 
-export function OverviewTab({ stats, loading }: OverviewTabProps) {
+export function OverviewTab({ 
+  stats, 
+  loading,
+  onNewProject,
+  onNewClient,
+  onNewPost,
+  onViewMessages
+}: OverviewTabProps) {
   const cards = [
     {
       title: 'Projetos Ativos',
@@ -82,19 +93,31 @@ export function OverviewTab({ stats, loading }: OverviewTabProps) {
             Ações Rápidas
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <button className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors group">
+            <button 
+              onClick={onNewProject}
+              className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+            >
               <FolderOpen size={24} className="mb-2 text-gray-400 group-hover:text-blue-600" />
               <span className="text-sm font-medium">Novo Projeto</span>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-green-50 hover:text-green-600 transition-colors group">
+            <button 
+              onClick={onNewClient}
+              className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-green-50 hover:text-green-600 transition-colors group"
+            >
               <Users size={24} className="mb-2 text-gray-400 group-hover:text-green-600" />
               <span className="text-sm font-medium">Novo Cliente</span>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-purple-50 hover:text-purple-600 transition-colors group">
+            <button 
+              onClick={onNewPost}
+              className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-purple-50 hover:text-purple-600 transition-colors group"
+            >
               <FileText size={24} className="mb-2 text-gray-400 group-hover:text-purple-600" />
               <span className="text-sm font-medium">Postar Blog</span>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-colors group">
+            <button 
+              onClick={onViewMessages}
+              className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-colors group"
+            >
               <MessageSquare size={24} className="mb-2 text-gray-400 group-hover:text-orange-600" />
               <span className="text-sm font-medium">Ver Mensagens</span>
             </button>

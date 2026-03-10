@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { QuoteRequest } from '../../../types';
-import { ExternalLink, FileText, ChevronRight, MessageSquare, Paperclip, Building, Globe } from 'lucide-react';
+import { ExternalLink, FileText, ChevronRight, MessageSquare, Paperclip, Building, Globe, Search } from 'lucide-react';
 
 type QuotesTabProps = {
   quotes: QuoteRequest[];
@@ -7,7 +8,20 @@ type QuotesTabProps = {
 };
 
 export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredQuotes = quotes.filter(quote => 
+    quote.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    quote.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    quote.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    quote.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    quote.service_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    quote.os_number?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const translations: Record<string, string> = {
+// ... (rest of translations)
+// (keeping the rest of the file logic same)
     // Gerais e Website
     deadline: 'Prazo Estimado:',
     needs_seo: 'Precisa de SEO:',
@@ -76,19 +90,33 @@ export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex-1">
           <h2 className="text-3xl font-black text-gray-900 tracking-tight text-left">Solicitações de Orçamento</h2>
           <p className="text-gray-500 font-medium text-left">Gerencie leads e ordens de serviço geradas pelo site.</p>
         </div>
-        <div className="bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
-          <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">Total: </span>
-          <span className="text-lg font-black text-blue-600">{quotes.length}</span>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar orçamentos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+            />
+          </div>
+          
+          <div className="bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm shrink-0">
+            <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">Total: </span>
+            <span className="text-lg font-black text-blue-600">{filteredQuotes.length}</span>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {quotes.map((quote) => (
+        {filteredQuotes.map((quote) => (
           <div key={quote.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
             {/* Header / Basic Info */}
             <div className="p-6 lg:p-8 flex flex-col lg:flex-row justify-between gap-6 border-b border-gray-50">
@@ -235,14 +263,16 @@ export function QuotesTab({ quotes, onUpdateStatus }: QuotesTabProps) {
           </div>
         ))}
 
-        {quotes.length === 0 && (
+        {filteredQuotes.length === 0 && (
           <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200 animate-in fade-in duration-700">
             <div className="w-20 h-20 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-6">
               <FileText size={40} />
             </div>
-            <h3 className="text-xl font-black text-gray-900 mb-2">Caixa de Entrada Vazia</h3>
+            <h3 className="text-xl font-black text-gray-900 mb-2">
+              {searchTerm ? 'Nenhum resultado encontrado' : 'Caixa de Entrada Vazia'}
+            </h3>
             <p className="text-gray-500 max-w-xs mx-auto">
-              Nenhuma solicitação de orçamento encontrada no momento.
+              {searchTerm ? `Não encontramos orçamentos correspondentes a "${searchTerm}"` : 'Nenhuma solicitação de orçamento encontrada no momento.'}
             </p>
           </div>
         )}

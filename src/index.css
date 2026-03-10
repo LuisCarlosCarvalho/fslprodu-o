@@ -1,47 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+
+    --premium-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    --blue-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+  }
+
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    @apply antialiased text-slate-900 bg-slate-50;
   }
 
-  /* Fluid Typography */
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Fluid Typography with Premium weight */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-black tracking-tight;
+  }
+
   h1 {
-    @apply text-3xl md:text-5xl lg:text-6xl;
+    @apply text-4xl md:text-6xl;
   }
   h2 {
-    @apply text-2xl md:text-3xl lg:text-4xl;
+    @apply text-3xl md:text-4xl;
   }
   h3 {
-    @apply text-xl md:text-2xl;
+    @apply text-2xl md:text-3xl;
   }
 }
 
 @layer components {
-  .container-custom {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    @apply rounded-3xl transition-all duration-300;
   }
 
-  .responsive-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  .glass-card:hover {
+    @apply border-white/50 shadow-xl shadow-blue-500/5;
+  }
+
+  .premium-button {
+    @apply relative overflow-hidden inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black transition-all active:scale-95 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30;
+  }
+
+  .premium-input {
+    @apply w-full px-5 py-4 bg-white/50 backdrop-blur-sm border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-900 placeholder:text-slate-300 transition-all;
+  }
+
+  .container-custom {
+    @apply max-w-7xl mx-auto px-6 sm:px-8 lg:px-12;
+  }
+
+  .section-padding {
+    @apply py-24 md:py-32;
   }
 }
 
-/* Scrollbar Hide Utility */
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full border-4 border-slate-100 hover:bg-slate-400 transition-colors;
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-/* Custom Responsive Fixes */
-@media (max-width: 640px) {
-  .hide-on-mobile {
-    display: none;
-  }
 }

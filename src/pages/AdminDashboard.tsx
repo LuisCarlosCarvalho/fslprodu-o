@@ -5,10 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Project, Service, Profile, QuoteRequest, MarketingProduct, Portfolio, ProjectStep, BlogPost, ClientLogo } from '../types';
 import { getErrorMessage } from '../lib/errors';
-import { getAvailablePaymentMethods, calculateFinalValue } from '../lib/payment-engine';
 import { GlobalPaymentSettings, PaymentMethodsState } from '../types';
-import { Users, FolderOpen, MessageSquare, ShoppingCart, Plus, Edit, Trash2, CheckSquare, Settings, Briefcase, Mail, MessageCircle, Paperclip, Send, FileText, Shield, TrendingUp, Lock, Zap, BarChart3 } from 'lucide-react';
-import { maskCPF, maskCNPJ, maskCEP, maskPostalCodePT, maskPhone } from '../lib/masks';
+import { Users, FolderOpen, MessageSquare, CheckSquare, Settings, Briefcase, TrendingUp, Lock, BarChart3, MessageCircle, FileText, ShoppingCart } from 'lucide-react';
 import { generateContractPDF } from '../lib/contracts';
 import { useAdminData } from '../hooks/useAdminData';
 import { ProjectsTab } from './admin/components/ProjectsTab';
@@ -23,10 +21,20 @@ import { LogosTab } from './admin/components/LogosTab';
 import { OverviewTab } from './admin/components/OverviewTab';
 import { PaymentConfigTab } from './admin/components/PaymentConfigTab';
 import { ProductRegistrationStepper } from './admin/components/ProductRegistrationStepper';
-import { PaymentScoreBar } from '../components/admin/PaymentScoreBar';
 import { AdminAuthModal } from '../components/admin/AdminAuthModal';
 import { TrafficAnalysisTab } from './admin/components/TrafficAnalysisTab';
 import { SEOAdminTab } from './admin/components/SEOAdminTab';
+
+import { ProjectModal } from './admin/modals/ProjectModal';
+import { ClientModal } from './admin/modals/ClientModal';
+import { StepModal } from './admin/modals/StepModal';
+import { ChatModal } from './admin/modals/ChatModal';
+import { ContractModal } from './admin/modals/ContractModal';
+import { BlogModal } from './admin/modals/BlogModal';
+import { LogoModal } from './admin/modals/LogoModal';
+import { ReplyModal } from './admin/modals/ReplyModal';
+import { PortfolioModal } from './admin/modals/PortfolioModal';
+import { ServiceModal } from './admin/modals/ServiceModal';
 
 type Tab = 'overview' | 'projects' | 'clients' | 'messages' | 'quotes' | 'infoproducts' | 'portfolio' | 'blog' | 'logos' | 'services' | 'checkout_config' | 'traffic' | 'seo_admin';
 
@@ -73,6 +81,7 @@ export function AdminDashboard() {
   const [showInfoproductModal, setShowInfoproductModal] = useState(false);
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
   const [showClientModal, setShowClientModal] = useState(false);
+  const [projectSearch, setProjectSearch] = useState('');
   const [clientForm, setClientForm] = useState<{
     full_name: string;
     email: string;
@@ -569,25 +578,30 @@ export function AdminDashboard() {
 
     try {
       if (editingClient) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('profiles')
           .update({
             ...clientForm,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingClient.id);
+        
+        if (updateError) throw updateError;
       } else {
-        const tempId = crypto.randomUUID();
+        await supabase.auth.getSession();
         
-        const { error } = await supabase.from('profiles').insert([{
-          id: tempId,
-          ...clientForm,
-          role: 'client',
-        }]);
+        const { data, error: functionError } = await supabase.functions.invoke('admin-create-client', {
+          body: clientForm
+        });
         
-        if (error) throw error;
+        if (functionError) {
+          throw functionError;
+        }
+        if (data?.error) {
+          throw new Error(data.error);
+        }
         
-        showToast('Cliente cadastrado com sucesso!', 'success');
+        showToast('Cliente e conta de acesso criados com sucesso!', 'success');
       }
       
       setShowClientModal(false);
@@ -1031,11 +1045,69 @@ export function AdminDashboard() {
             ) : (
               <>
                 {activeTab === 'overview' && (
-                  <OverviewTab stats={stats} loading={loading} />
+                  <OverviewTab 
+                    stats={stats} 
+                    loading={loading}
+                    onNewProject={() => {
+                        setEditingProject(null);
+                        setProjectForm({
+                          client_id: '',
+                          service_id: '',
+                          project_name: '',
+                          status: 'pending',
+                          progress_percentage: 0,
+                          notes: '',
+                          total_value: 0,
+                          payment_status: 'pending',
+                          payment_method: null,
+                          card_fee_included: false,
+                        });
+                        setShowProjectModal(true);
+                    }}
+                    onNewClient={() => {
+                        setEditingClient(null);
+                        setClientForm({
+                          full_name: '',
+                          email: '',
+                          phone: '',
+                          country: 'Brasil',
+                          cpf_cnpj: '',
+                          nif: '',
+                          address: '',
+                          city: '',
+                          state: '',
+                          state_distrito: '',
+                          zip_code: '',
+                          payment_score: 100,
+                          manual_payment_override: false,
+                          force_password_reset: false,
+                          payment_settings: {
+                            unlocked_methods: ['pix', 'transfer', 'cash', 'credit_card'],
+                            card_fee_enabled: true,
+                            custom_card_fee: null,
+                            default_currency: 'BRL'
+                          }
+                        });
+                        setShowClientModal(true);
+                    }}
+                    onNewPost={() => {
+                      setEditingBlogPost(null);
+                      setBlogForm({
+                        title: '',
+                        slug: '',
+                        excerpt: '',
+                        content: '',
+                        featured_image_url: '',
+                        status: 'draft'
+                      });
+                      setShowBlogModal(true);
+                    }}
+                    onViewMessages={() => setActiveTab('messages')}
+                  />
                 )}
                 {activeTab === 'projects' && (
                   <ProjectsTab
-                    projects={projects}
+                    projects={projects.filter(p => !projectSearch || p.client?.email?.toLowerCase().includes(projectSearch.toLowerCase()) || p.client?.full_name?.toLowerCase().includes(projectSearch.toLowerCase()) || p.project_name?.toLowerCase().includes(projectSearch.toLowerCase()))}
                     onNewProject={() => {
                         setEditingProject(null);
                         setProjectForm({
@@ -1090,6 +1162,8 @@ export function AdminDashboard() {
                         setShowContractModal(true);
                     }}
                     onDeleteProject={handleDeleteProject}
+                    searchQuery={projectSearch}
+                    onSearchChange={setProjectSearch}
                   />
                 )}
 
@@ -1147,6 +1221,13 @@ export function AdminDashboard() {
                           }
                         });
                         setShowClientModal(true);
+                    }}
+                    onViewProjects={(clientId) => {
+                      const client = clients.find(c => c.id === clientId);
+                      if (client) {
+                        setProjectSearch(client.email || client.full_name);
+                        setActiveTab('projects');
+                      }
                     }}
                   />
                 )}
@@ -1332,211 +1413,21 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {showProjectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-6">
-              {editingProject ? 'Editar Projeto' : 'Novo Projeto'}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">Cliente</label>
-                <select
-                  value={projectForm.client_id}
-                  onChange={(e) => setProjectForm({ ...projectForm, client_id: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="">Selecione um cliente</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.full_name} ({client.email || 'S/E-mail'})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Serviço</label>
-                <select
-                  value={projectForm.service_id}
-                  onChange={(e) => setProjectForm({ ...projectForm, service_id: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="">Selecione um serviço</option>
-                  {services.map((service) => (
-                    <option key={service.id} value={service.id}>
-                      {service.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Nome do Projeto</label>
-                <input
-                  type="text"
-                  value={projectForm.project_name}
-                  onChange={(e) => setProjectForm({ ...projectForm, project_name: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Status</label>
-                <select
-                  value={projectForm.status}
-                  onChange={(e) => setProjectForm({ ...projectForm, status: e.target.value as Project['status'] })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="pending">Pendente</option>
-                  <option value="in_progress">Em Andamento</option>
-                  <option value="completed">Concluído</option>
-                  <option value="cancelled">Cancelado</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Progresso: {projectForm.progress_percentage}%
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={projectForm.progress_percentage}
-                  onChange={(e) => setProjectForm({ ...projectForm, progress_percentage: parseInt(e.target.value) })}
-                  className="w-full"
-                />
-              </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Valor Base do Projeto</label>
-                    <input
-                      type="number"
-                      value={projectForm.total_value}
-                      onChange={(e) => setProjectForm({ ...projectForm, total_value: parseFloat(e.target.value) })}
-                      className="w-full px-4 py-2 border rounded-lg"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Ajuste de Taxas/Descontos</label>
-                    <div 
-                      className="flex items-center gap-3 p-2 border-2 border-blue-100 bg-blue-50/50 rounded-xl transition-all"
-                    >
-                      <Zap size={18} className="text-blue-600" />
-                      <span className="text-[10px] font-black uppercase text-blue-700">
-                        Regras de Checkout Ativas
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-              {projectForm.card_fee_included && (
-                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 animate-in fade-in slide-in-from-top-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-blue-600 font-medium">Valor com Acréscimo:</span>
-                    <span className="text-blue-700 font-black text-lg">
-                      {(() => {
-                        const client = clients.find(c => c.id === projectForm.client_id);
-                        const currency = client?.payment_settings?.default_currency || (client?.country === 'Portugal' ? 'EUR' : 'BRL');
-                        const locale = client?.country === 'Portugal' ? 'pt-PT' : 'pt-BR';
-                        
-                        const finalValue = paymentConfigs 
-                          ? calculateFinalValue(projectForm.payment_method || 'credit_card', projectForm.total_value || 0, paymentConfigs)
-                          : (projectForm.total_value || 0) * 1.035;
-
-                        return new Intl.NumberFormat(locale, { 
-                          style: 'currency', 
-                          currency 
-                        }).format(finalValue);
-                      })()}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Método de Pagamento</label>
-                <select
-                  value={projectForm.payment_method || ''}
-                  onChange={(e) => setProjectForm({ ...projectForm, payment_method: e.target.value as any })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="">Selecione o método</option>
-                  {paymentConfigs && paymentGlobalSettings ? (
-                    (() => {
-                      const client = clients.find(c => c.id === projectForm.client_id);
-                      if (!client) return null;
-
-                      const availableMethods = getAvailablePaymentMethods({
-                        orderValue: projectForm.total_value || 0,
-                        client,
-                        config: paymentConfigs,
-                        global: paymentGlobalSettings
-                      });
-
-                      return availableMethods.map(m => (
-                        <option key={m.id} value={m.id} disabled={!m.enabled}>
-                          {m.name} {!m.enabled && `🔒 (${m.reason})`} {m.discount_percentage ? `(-${m.discount_percentage}%)` : ''}
-                        </option>
-                      ));
-                    })()
-                  ) : (
-                    <>
-                      <option value="pix">PIX (Carregando Regras...)</option>
-                      <option value="credit_card">Cartão de Crédito</option>
-                    </>
-                  )}
-                  <option value="cash">Dinheiro / À Vista</option>
-                  <option value="transfer">Transferência Bancária</option>
-                </select>
-                {clients.find(c => c.id === projectForm.client_id)?.payment_score !== undefined && (
-                  <p className="text-[10px] text-gray-400 mt-1 italic">
-                    * Opções baseadas no score do cliente ({clients.find(c => c.id === projectForm.client_id)?.payment_score}/100)
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Status do Pagamento</label>
-                <select
-                  value={projectForm.payment_status}
-                  onChange={(e) => setProjectForm({ ...projectForm, payment_status: e.target.value as any })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="pending">Pendente</option>
-                  <option value="partially_paid">Parcialmente Pago</option>
-                  <option value="paid">Pago / Quitado</option>
-                  <option value="cancelled">Cancelado</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Observações</label>
-                <textarea
-                  value={projectForm.notes}
-                  onChange={(e) => setProjectForm({ ...projectForm, notes: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  rows={4}
-                />
-              </div>
-            </div>
-            <div className="flex gap-4 mt-6">
-              <button
-                onClick={handleSaveProject}
-                className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
-              >
-                Salvar
-              </button>
-              <button
-                onClick={() => {
-                  setShowProjectModal(false);
-                  setEditingProject(null);
-                }}
-                className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ProjectModal
+        isOpen={showProjectModal}
+        onClose={() => {
+          setShowProjectModal(false);
+          setEditingProject(null);
+        }}
+        editingProject={editingProject}
+        projectForm={projectForm}
+        setProjectForm={setProjectForm}
+        handleSaveProject={handleSaveProject}
+        clients={clients}
+        services={services}
+        paymentConfigs={paymentConfigs}
+        paymentGlobalSettings={paymentGlobalSettings}
+      />
 
       {showInfoproductModal && (
         <ProductRegistrationStepper 
@@ -1572,1063 +1463,83 @@ export function AdminDashboard() {
         />
       )}
 
-      {showPortfolioModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-6">
-              {editingPortfolio ? 'Editar Projeto' : 'Novo Projeto'}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">Título do Projeto</label>
-                <input
-                  type="text"
-                  value={portfolioForm.title}
-                  onChange={(e) => setPortfolioForm({ ...portfolioForm, title: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  placeholder="Nome do projeto"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Categoria</label>
-                <select
-                  value={portfolioForm.category}
-                  onChange={(e) => setPortfolioForm({ ...portfolioForm, category: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="Design Gráfico">Design Gráfico</option>
-                  <option value="Easy Colour">Easy Colour</option>
-                  <option value="Loja Online">Loja Online</option>
-                  <option value="Manutenção">Manutenção</option>
-                  <option value="Marketing Digital">Marketing Digital</option>
-                  <option value="Modelos de Página">Modelos de Página</option>
-                  <option value="Site à Medida">Site à Medida</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">URL da Imagem</label>
-                <input
-                  type="text"
-                  value={portfolioForm.image_url}
-                  onChange={(e) => setPortfolioForm({ ...portfolioForm, image_url: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  placeholder="https://exemplo.com/imagem.jpg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">URL do Projeto (opcional)</label>
-                <input
-                  type="text"
-                  value={portfolioForm.project_url}
-                  onChange={(e) => setPortfolioForm({ ...portfolioForm, project_url: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  placeholder="https://projeto.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Descrição</label>
-                <textarea
-                  value={portfolioForm.description}
-                  onChange={(e) => setPortfolioForm({ ...portfolioForm, description: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  rows={4}
-                  placeholder="Breve descrição do projeto"
-                />
-              </div>
-              <div>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={portfolioForm.is_active}
-                    onChange={(e) => setPortfolioForm({ ...portfolioForm, is_active: e.target.checked })}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm font-semibold">Ativo (visível no site)</span>
-                </label>
-              </div>
-            </div>
-            <div className="flex gap-4 mt-6">
-              <button
-                onClick={handleSavePortfolio}
-                className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
-              >
-                Salvar
-              </button>
-              <button
-                onClick={() => {
-                  setShowPortfolioModal(false);
-                  setEditingPortfolio(null);
-                }}
-                className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PortfolioModal
+        isOpen={showPortfolioModal}
+        onClose={() => {
+          setShowPortfolioModal(false);
+          setEditingPortfolio(null);
+        }}
+        editingPortfolio={editingPortfolio}
+        portfolioForm={portfolioForm}
+        setPortfolioForm={setPortfolioForm}
+        handleSavePortfolio={handleSavePortfolio}
+      />
 
-      {showServiceModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-6">
-              {editingService ? 'Editar Serviço' : 'Novo Serviço'}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">Nome do Serviço</label>
-                <input
-                  type="text"
-                  value={serviceForm.name}
-                  onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Categoria</label>
-                <select
-                  value={serviceForm.category}
-                  onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  required
-                >
-                  <option value="Web Sites">Web Sites</option>
-                  <option value="Criação de Logos">Criação de Logos</option>
-                  <option value="Gerenciamento de Trafego">Gerenciamento de Tráfego</option>
-                  <option value="SEO">SEO</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Preço Base (€)</label>
-                <input
-                  type="number"
-                  value={serviceForm.base_price}
-                  onChange={(e) => setServiceForm({ ...serviceForm, base_price: parseFloat(e.target.value) })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Descrição</label>
-                <textarea
-                  value={serviceForm.description}
-                  onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  rows={4}
-                  required
-                />
-              </div>
-
-              <div className="pt-6 border-t space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-black text-gray-900 uppercase tracking-widest">Preços por Região</h3>
-                  <div className="flex gap-2">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase">JSON Config</span>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Brasil */}
-                  <div className="space-y-4 p-5 bg-green-50/50 rounded-2xl border border-green-100 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">🇧🇷</span>
-                        <h4 className="font-bold text-green-800">Brasil (BRL)</h4>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {serviceForm.pricing_config.BR.ranges.map((range: any, idx: number) => (
-                        <div key={idx} className="flex gap-2 items-end animate-in fade-in slide-in-from-left-2 transition-all">
-                          <div className="flex-1">
-                            <label className="block text-[9px] uppercase font-black text-green-600 mb-1">Rótulo</label>
-                            <input
-                              type="text"
-                              value={range.label}
-                              placeholder="ex: Até 5 pág."
-                              onChange={(e) => {
-                                const newRanges = [...serviceForm.pricing_config.BR.ranges];
-                                newRanges[idx].label = e.target.value;
-                                setServiceForm({
-                                  ...serviceForm,
-                                  pricing_config: {
-                                    ...serviceForm.pricing_config,
-                                    BR: { ...serviceForm.pricing_config.BR, ranges: newRanges }
-                                  }
-                                });
-                              }}
-                              className="w-full px-3 py-2 border border-green-200 rounded-xl text-xs focus:ring-2 focus:ring-green-500 outline-none"
-                            />
-                          </div>
-                          <div className="w-28">
-                            <label className="block text-[9px] uppercase font-black text-green-600 mb-1">Valor (R$)</label>
-                            <input
-                              type="text"
-                              value={range.value}
-                              placeholder="1.500,00"
-                              onChange={(e) => {
-                                const newRanges = [...serviceForm.pricing_config.BR.ranges];
-                                newRanges[idx].value = e.target.value;
-                                setServiceForm({
-                                  ...serviceForm,
-                                  pricing_config: {
-                                    ...serviceForm.pricing_config,
-                                    BR: { ...serviceForm.pricing_config.BR, ranges: newRanges }
-                                  }
-                                });
-                              }}
-                              className="w-full px-3 py-2 border border-green-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newRanges = serviceForm.pricing_config.BR.ranges.filter((_: any, i: number) => i !== idx);
-                              setServiceForm({
-                                ...serviceForm,
-                                pricing_config: {
-                                  ...serviceForm.pricing_config,
-                                  BR: { ...serviceForm.pricing_config.BR, ranges: newRanges }
-                                }
-                              });
-                            }}
-                            className="p-2 text-red-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-red-100"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newRanges = [...serviceForm.pricing_config.BR.ranges, { label: '', value: '' }];
-                        setServiceForm({
-                          ...serviceForm,
-                          pricing_config: {
-                            ...serviceForm.pricing_config,
-                            BR: { ...serviceForm.pricing_config.BR, ranges: newRanges }
-                          }
-                        });
-                      }}
-                      className="w-full py-3 border-2 border-dashed border-green-200 text-green-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:border-green-400 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Plus size={14} />
-                      Adicionar Faixa BR
-                    </button>
-                  </div>
-
-                  {/* Portugal */}
-                  <div className="space-y-4 p-5 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">🇵🇹</span>
-                        <h4 className="font-bold text-blue-800">Portugal (EUR)</h4>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {serviceForm.pricing_config.PT.ranges.map((range: any, idx: number) => (
-                        <div key={idx} className="flex gap-2 items-end animate-in fade-in slide-in-from-right-2 transition-all">
-                          <div className="flex-1">
-                            <label className="block text-[9px] uppercase font-black text-blue-600 mb-1">Rótulo</label>
-                            <input
-                              type="text"
-                              value={range.label}
-                              placeholder="ex: Até 5 pág."
-                              onChange={(e) => {
-                                const newRanges = [...serviceForm.pricing_config.PT.ranges];
-                                newRanges[idx].label = e.target.value;
-                                setServiceForm({
-                                  ...serviceForm,
-                                  pricing_config: {
-                                    ...serviceForm.pricing_config,
-                                    PT: { ...serviceForm.pricing_config.PT, ranges: newRanges }
-                                  }
-                                });
-                              }}
-                              className="w-full px-3 py-2 border border-blue-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                          </div>
-                          <div className="w-28">
-                            <label className="block text-[9px] uppercase font-black text-blue-600 mb-1">Valor (€)</label>
-                            <input
-                              type="text"
-                              value={range.value}
-                              placeholder="500.00"
-                              onChange={(e) => {
-                                const newRanges = [...serviceForm.pricing_config.PT.ranges];
-                                newRanges[idx].value = e.target.value;
-                                setServiceForm({
-                                  ...serviceForm,
-                                  pricing_config: {
-                                    ...serviceForm.pricing_config,
-                                    PT: { ...serviceForm.pricing_config.PT, ranges: newRanges }
-                                  }
-                                });
-                              }}
-                              className="w-full px-3 py-2 border border-blue-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newRanges = serviceForm.pricing_config.PT.ranges.filter((_: any, i: number) => i !== idx);
-                              setServiceForm({
-                                ...serviceForm,
-                                pricing_config: {
-                                  ...serviceForm.pricing_config,
-                                  PT: { ...serviceForm.pricing_config.PT, ranges: newRanges }
-                                }
-                              });
-                            }}
-                            className="p-2 text-red-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-red-100"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newRanges = [...serviceForm.pricing_config.PT.ranges, { label: '', value: '' }];
-                        setServiceForm({
-                          ...serviceForm,
-                          pricing_config: {
-                            ...serviceForm.pricing_config,
-                            PT: { ...serviceForm.pricing_config.PT, ranges: newRanges }
-                          }
-                        });
-                      }}
-                      className="w-full py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:border-blue-400 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Plus size={14} />
-                      Adicionar Faixa PT
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-4 mt-6">
-              <button
-                onClick={handleSaveService}
-                className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
-              >
-                Salvar
-              </button>
-              <button
-                onClick={() => {
-                  setShowServiceModal(false);
-                  setEditingService(null);
-                }}
-                className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showReplyModal && selectedMessage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Responder Mensagem</h2>
-              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                (selectedMessage as any).contact_method === 'whatsapp' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-              }`}>
-                Origem: {(selectedMessage as any).contact_method || 'WhatsApp'}
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Valor do Serviço / Orçamento (Opcional)</label>
-                  <input
-                    type="text"
-                    value={replyForm.value}
-                    onChange={(e) => setReplyForm({ ...replyForm, value: e.target.value })}
-                    placeholder="Ex: 1.500,00"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Observações ou Dúvidas (Opcional)</label>
-                  <input
-                    type="text"
-                    value={replyForm.observations}
-                    onChange={(e) => setReplyForm({ ...replyForm, observations: e.target.value })}
-                    placeholder="Ex: Prazo de 15 dias"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Texto da Resposta (Editável)</label>
-                <textarea
-                  value={replyForm.message}
-                  onChange={(e) => {
-                    setReplyForm({ ...replyForm, message: e.target.value });
-                    setIsMessageEdited(true);
-                  }}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  rows={8}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-              <div className="relative group">
-                {(selectedMessage as any).contact_method !== 'email' && (
-                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] bg-green-600 text-white px-2 py-0.5 rounded-full font-bold animate-bounce whitespace-nowrap">
-                    Canal Sugerido
-                  </span>
-                )}
-                <button
-                  onClick={handleReplyWhatsApp}
-                  className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold transition-all ${
-                    (selectedMessage as any).contact_method !== 'email'
-                      ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-200 scale-105'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <MessageCircle size={20} />
-                  Responder por WhatsApp
-                </button>
-              </div>
-
-              <div className="relative group">
-                {(selectedMessage as any).contact_method === 'email' && (
-                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold animate-bounce whitespace-nowrap">
-                    Canal Sugerido
-                  </span>
-                )}
-                <button
-                  onClick={handleReplyEmail}
-                  className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold transition-all ${
-                    (selectedMessage as any).contact_method === 'email'
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 scale-105'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <Mail size={20} />
-                  Responder por E-mail
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-100">
-              <span className="text-xs text-gray-400">Clique para apenas copiar o texto:</span>
-              <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(replyForm.message);
-                  showToast('Mensagem copiada!', 'success');
-                }}
-                className="text-xs font-bold text-blue-600 hover:underline"
-              >
-                Copiar Mensagem
-              </button>
-            </div>
-
-            <button
-              onClick={() => {
-                setShowReplyModal(false);
-                setSelectedMessage(null);
-                setIsMessageEdited(false);
-              }}
-              className="w-full mt-4 py-2 text-gray-400 hover:text-gray-600 transition-colors text-sm font-medium"
-            >
-              Fechar sem responder
-            </button>
-          </div>
-        </div>
-      )}
-      {showClientModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 border-l-4 border-blue-600 pl-4">
-                {editingClient ? 'Editar Perfil do Cliente' : 'Novo Cadastro de Cliente'}
-              </h2>
-              <button onClick={() => setShowClientModal(false)} className="text-gray-400 hover:text-gray-600">
-                <Plus size={24} className="rotate-45" />
-              </button>
-            </div>
-
-            {editingClient && (
-              <div className="mb-8 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                <PaymentScoreBar score={editingClient.payment_score} />
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Country Selection First */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  {editingClient ? 'País de Origem' : 'Selecione o País de Origem'}
-                </label>
-                <div className={`grid ${editingClient ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
-                  {(!editingClient || clientForm.country === 'Brasil') && (
-                    <button
-                      type="button"
-                      onClick={() => !editingClient && setClientForm({ 
-                        ...clientForm, 
-                        country: 'Brasil',
-                        payment_settings: { 
-                          ...clientForm.payment_settings, 
-                          default_currency: 'BRL',
-                          unlocked_methods: clientForm.payment_settings.unlocked_methods
-                            .map(m => m === 'mbway' ? 'pix' : m)
-                            .filter((m, i, self) => self.indexOf(m) === i)
-                        }
-                      })}
-                      className={`flex items-center justify-center gap-3 py-4 border-2 rounded-xl transition-all ${
-                        clientForm.country === 'Brasil' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-gray-100 text-gray-400 hover:border-gray-200'
-                      } ${editingClient ? 'cursor-default' : ''}`}
-                    >
-                      <span className="text-2xl">🇧🇷</span>
-                      <span className="font-bold">Brasil</span>
-                    </button>
-                  )}
-                  {(!editingClient || clientForm.country === 'Portugal') && (
-                    <button
-                      type="button"
-                      onClick={() => !editingClient && setClientForm({ 
-                        ...clientForm, 
-                        country: 'Portugal',
-                        payment_settings: { 
-                          ...clientForm.payment_settings, 
-                          default_currency: 'EUR',
-                          unlocked_methods: clientForm.payment_settings.unlocked_methods
-                            .map(m => m === 'pix' ? 'mbway' : m)
-                            .filter((m, i, self) => self.indexOf(m) === i)
-                        }
-                      })}
-                      className={`flex items-center justify-center gap-3 py-4 border-2 rounded-xl transition-all ${
-                        clientForm.country === 'Portugal' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-gray-100 text-gray-400 hover:border-gray-200'
-                      } ${editingClient ? 'cursor-default' : ''}`}
-                    >
-                      <span className="text-2xl">🇵🇹</span>
-                      <span className="font-bold">Portugal</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Nome Completo / Empresa</label>
-                <input
-                  type="text"
-                  value={clientForm.full_name}
-                  onChange={(e) => setClientForm({ ...clientForm, full_name: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Nome do Cliente"
-                />
-              </div>
-
-               <div>
-                 <label className="block text-sm font-semibold mb-2">
-                   {clientForm.country === 'Brasil' ? 'CPF ou CNPJ' : 'NIF'}
-                 </label>
-                 <input
-                   type="text"
-                   value={clientForm.country === 'Brasil' ? clientForm.cpf_cnpj : clientForm.nif}
-                   onChange={(e) => {
-                     let val = e.target.value;
-                     if (clientForm.country === 'Brasil') {
-                       val = val.length <= 14 ? maskCPF(val) : maskCNPJ(val);
-                       setClientForm({ ...clientForm, cpf_cnpj: val });
-                     } else {
-                       setClientForm({ ...clientForm, nif: val.replace(/\D/g, '').slice(0, 9) });
-                     }
-                   }}
-                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                   placeholder={clientForm.country === 'Brasil' ? '000.000.000-00' : '123456789'}
-                 />
-               </div>
-
-               <div>
-                 <label className="block text-sm font-semibold mb-2">E-mail (Login)</label>
-                 <input
-                   type="email"
-                   value={clientForm.email}
-                   onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                   placeholder="email@exemplo.com"
-                 />
-               </div>
-
-               <div>
-                 <label className="block text-sm font-semibold mb-2">Telefone</label>
-                 <input
-                   type="text"
-                   value={clientForm.phone}
-                   onChange={(e) => {
-                     const val = clientForm.country === 'Brasil' ? maskPhone(e.target.value) : e.target.value;
-                     setClientForm({ ...clientForm, phone: val });
-                   }}
-                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                   placeholder={clientForm.country === 'Brasil' ? '(00) 00000-0000' : '+351 000 000 000'}
-                 />
-               </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2">Endereço Completo</label>
-                <input
-                  type="text"
-                  value={clientForm.address}
-                  onChange={(e) => setClientForm({ ...clientForm, address: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Rua, Número, Bairro..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Cidade</label>
-                <input
-                  type="text"
-                  value={clientForm.city}
-                  onChange={(e) => setClientForm({ ...clientForm, city: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">
-                    {clientForm.country === 'Brasil' ? 'Estado' : 'Distrito'}
-                  </label>
-                  <input
-                    type="text"
-                    value={clientForm.state_distrito}
-                    onChange={(e) => setClientForm({ ...clientForm, state_distrito: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2">
-                    {clientForm.country === 'Brasil' ? 'CEP' : 'Cód. Postal'}
-                  </label>
-                  <input
-                    type="text"
-                    value={clientForm.zip_code}
-                    onChange={(e) => {
-                      const val = clientForm.country === 'Brasil' ? maskCEP(e.target.value) : maskPostalCodePT(e.target.value);
-                      setClientForm({ ...clientForm, zip_code: val });
-                    }}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder={clientForm.country === 'Brasil' ? '00000-000' : '0000-000'}
-                  />
-                </div>
-              </div>
-              
-              <div className="md:col-span-2 space-y-6 pt-6 border-t border-gray-100">
-                <div className="bg-gray-50/50 p-6 rounded-[24px] border border-gray-100">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-gray-900 text-white rounded-xl flex items-center justify-center shadow-lg shadow-gray-200">
-                      <ShoppingCart size={24} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest">Configuração de Pagamento</h4>
-                      <p className="text-xs text-gray-500">
-                        Moeda Atual: <span className="font-bold text-blue-600">
-                          {clientForm.payment_settings.default_currency === 'BRL' ? 'Real (R$)' : 'Euro (€)'}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {['pix', 'mbway', 'credit_card', 'transfer', 'cash', 'boleto', 'installments'].filter(m => {
-                      if (clientForm.country === 'Brasil' && m === 'mbway') return false;
-                      if (clientForm.country === 'Portugal' && m === 'pix') return false;
-                      return true;
-                    }).map((method) => {
-                      const isSelected = clientForm.payment_settings.unlocked_methods.includes(method);
-                      return (
-                        <button
-                          key={method}
-                          type="button"
-                          onClick={() => {
-                            const currentMethods = clientForm.payment_settings.unlocked_methods;
-                            const newMethods = isSelected
-                              ? currentMethods.filter(m => m !== method)
-                              : [...currentMethods, method];
-                            setClientForm({
-                              ...clientForm,
-                              payment_settings: { ...clientForm.payment_settings, unlocked_methods: newMethods }
-                            });
-                          }}
-                          className={`px-3 py-2 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-all ${
-                            isSelected 
-                              ? 'border-blue-600 bg-blue-600 text-white' 
-                              : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
-                          }`}
-                        >
-                          {method === 'mbway' ? 'MB WAY' : method.replace('_', ' ')}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <div 
-                        onClick={() => setClientForm({ 
-                          ...clientForm, 
-                          payment_settings: { ...clientForm.payment_settings, card_fee_enabled: !clientForm.payment_settings.card_fee_enabled } 
-                        })}
-                        className={`w-12 h-6 rounded-full relative transition-all ${clientForm.payment_settings.card_fee_enabled ? 'bg-blue-600' : 'bg-gray-300'}`}
-                      >
-                        <div className={`absolute top-1 h-4 w-4 bg-white rounded-full transition-all ${clientForm.payment_settings.card_fee_enabled ? 'left-7' : 'left-1'}`} />
-                      </div>
-                      <span className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors uppercase tracking-widest">Repassar Taxa de Cartão</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between bg-blue-50/50 p-6 rounded-[24px] border border-blue-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-                      <Shield size={24} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest">Gestão de Crédito</h4>
-                      <p className="text-xs text-gray-500">Configure o score e concessões especiais</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Score Atual: {clientForm.payment_score}</label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={clientForm.payment_score}
-                          onChange={(e) => setClientForm({ ...clientForm, payment_score: parseInt(e.target.value) })}
-                          className="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                        />
-                    </div>
-                    <div className="h-10 w-px bg-gray-200 mx-2" />
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <div 
-                        onClick={() => setClientForm({ ...clientForm, manual_payment_override: !clientForm.manual_payment_override })}
-                        className={`w-12 h-6 rounded-full relative transition-all ${clientForm.manual_payment_override ? 'bg-green-500' : 'bg-gray-300'}`}
-                      >
-                        <div className={`absolute top-1 h-4 w-4 bg-white rounded-full transition-all ${clientForm.manual_payment_override ? 'left-7' : 'left-1'}`} />
-                      </div>
-                      <span className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Autorização Manual</span>
-                    </label>
-                  </div>
-                </div>
-
-                <label className="flex items-center gap-3 cursor-pointer p-4 hover:bg-red-50 rounded-2xl transition-colors border border-transparent hover:border-red-100 group">
-                  <div 
-                    onClick={() => setClientForm({ ...clientForm, force_password_reset: !clientForm.force_password_reset })}
-                    className={`w-10 h-5 rounded-full relative transition-all ${clientForm.force_password_reset ? 'bg-red-500' : 'bg-gray-300'}`}
-                  >
-                    <div className={`absolute top-0.5 h-4 w-4 bg-white rounded-full transition-all ${clientForm.force_password_reset ? 'left-5.5' : 'left-0.5'}`} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-gray-700 group-hover:text-red-600 transition-colors">Forçar Troca de Senha</span>
-                    <span className="text-[10px] text-gray-400">Obrigará o cliente a trocar a senha no próximo login</span>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex gap-4 mt-10">
-              <button
-                onClick={() => handleSaveClient()}
-                className="flex-1 bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
-              >
-                {editingClient ? 'Atualizar Cliente' : 'Finalizar Cadastro'}
-              </button>
-              <button
-                onClick={() => setShowClientModal(false)}
-                className="px-8 py-4 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all"
-              >
-                Cancelar
-              </button>
-            </div>
-            
-            {!editingClient && (
-              <p className="text-center text-xs text-gray-400 mt-4 italic">
-                * Ao finalizar, o número de O.S. será gerado e o acesso do cliente será criado automaticamente.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-      {showStepModal && selectedProjectForSteps && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 leading-tight">Gestor de Etapas</h2>
-                <p className="text-gray-500 text-sm">Projeto: {selectedProjectForSteps.project_name}</p>
-              </div>
-              <button 
-                onClick={() => setShowStepModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
-              >
-                <Plus size={24} className="rotate-45" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-              {/* Step Editor Form */}
-              <div className="lg:col-span-1 border-r pr-8 border-gray-100">
-                <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Plus size={18} className="text-blue-600" />
-                  {editingStep ? 'Editar Etapa' : 'Nova Etapa'}
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Título da Etapa</label>
-                    <input
-                      type="text"
-                      value={stepForm.title}
-                      onChange={(e) => setStepForm({ ...stepForm, title: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold"
-                      placeholder="Ex: Briefing Inicial"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Descrição</label>
-                    <textarea
-                      value={stepForm.description}
-                      onChange={(e) => setStepForm({ ...stepForm, description: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm min-h-[100px]"
-                      placeholder="Detalhes sobre o que será feito..."
-                    />
-                  </div>
-                  <div className="flex items-center gap-3 py-2">
-                    <input 
-                      type="checkbox" 
-                      id="step_completed"
-                      checked={stepForm.is_completed}
-                      onChange={(e) => setStepForm({ ...stepForm, is_completed: e.target.checked })}
-                      className="w-5 h-5 rounded-lg text-blue-600 border-gray-300"
-                    />
-                    <label htmlFor="step_completed" className="text-sm font-bold text-gray-700 cursor-pointer">Marcar como Concluída</label>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">URL do Anexo / Entregável</label>
-                    <input
-                      type="text"
-                      value={stepForm.file_url}
-                      onChange={(e) => setStepForm({ ...stepForm, file_url: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-mono"
-                      placeholder="Caminho do arquivo no storage..."
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-4">
-                    <button
-                      onClick={handleSaveStep}
-                      className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Plus size={16} />
-                      {editingStep ? 'Atualizar' : 'Adicionar'}
-                    </button>
-                    {editingStep && (
-                      <button
-                        onClick={() => {
-                          setEditingStep(null);
-                          setStepForm({ title: '', description: '', is_completed: false, file_url: '', order_index: projectSteps.length + 1 });
-                        }}
-                        className="p-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 transition-all"
-                      >
-                         <Trash2 size={18} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Steps List */}
-              <div className="lg:col-span-2 space-y-4">
-                 <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest text-xs text-gray-400">Linha do Tempo</h3>
-                 {projectSteps.length === 0 ? (
-                   <div className="py-20 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-100 font-bold text-gray-300 text-sm">
-                      Nenhuma etapa cadastrada ainda.
-                   </div>
-                 ) : (
-                   <div className="space-y-3">
-                     {projectSteps.map((step, idx) => (
-                       <div key={step.id} className="group flex items-center justify-between p-5 border border-gray-100 rounded-2xl bg-white hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50/50 transition-all">
-                          <div className="flex items-center gap-4">
-                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs ${step.is_completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-                               {idx + 1}
-                             </div>
-                             <div>
-                               <p className={`font-bold text-sm ${step.is_completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{step.title}</p>
-                               {step.is_completed && <span className="text-[10px] text-green-600 font-black uppercase tracking-tighter">Tarefa Finalizada</span>}
-                             </div>
-                          </div>
-                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                             <button
-                               onClick={() => {
-                                 setEditingStep(step);
-                                 setStepForm({
-                                   title: step.title,
-                                   description: step.description || '',
-                                   is_completed: step.is_completed,
-                                   file_url: step.file_url || '',
-                                   order_index: step.order_index,
-                                 });
-                               }}
-                               className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                             >
-                                <Edit size={16} />
-                             </button>
-                             <button
-                               onClick={() => handleDeleteStep(step.id)}
-                               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                             >
-                                <Trash2 size={16} />
-                             </button>
-                          </div>
-                       </div>
-                     ))}
-                   </div>
-                 )}
-              </div>
-            </div>
-            
-            <div className="mt-12 pt-8 border-t border-gray-100 flex justify-end">
-               <button 
-                onClick={() => setShowStepModal(false)}
-                className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-blue-600 transition-all"
-               >
-                 Concluir Edição
-               </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showChatModal && selectedProjectForChat && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-2xl p-0 max-w-2xl w-full mx-4 h-[80vh] flex flex-col shadow-2xl overflow-hidden">
-             <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-               <div>
-                  <h2 className="text-xl font-bold text-gray-900">Chat do Projeto</h2>
-                  <p className="text-xs text-gray-500">Acompanhamento: {selectedProjectForChat.project_name}</p>
-               </div>
-               <button onClick={() => setShowChatModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <Plus size={24} className="rotate-45" />
-               </button>
-             </div>
-             
-             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
-                {projectMessages.length === 0 ? (
-                  <div className="text-center py-20 text-gray-300 italic">Nenhuma mensagem trocada ainda.</div>
-                ) : (
-                  projectMessages.map((msg) => {
-                    const isMe = msg.sender_id === user?.id;
-                    return (
-                      <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                         <span className="text-[10px] font-bold text-gray-400 mb-1 px-1">
-                           {msg.sender?.full_name || 'Usuário'} • {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                         </span>
-                         <div className={`max-w-[80%] p-4 rounded-2xl text-sm ${
-                           isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none'
-                         }`}>
-                           {msg.message}
-                           {msg.payload?.type === 'attachment' && (
-                             <div className="mt-2 pt-2 border-t border-white/20 flex items-center gap-2">
-                               <Paperclip size={14} />
-                               <span className="text-xs italic truncate">Anexo enviado</span>
-                             </div>
-                           )}
-                         </div>
-                      </div>
-                    );
-                  })
-                )}
-             </div>
-             
-             <div className="p-4 border-t bg-gray-50">
-                <div className="flex gap-2">
-                   <input
-                     type="text"
-                     value={newProjectMessage}
-                     onChange={(e) => setNewProjectMessage(e.target.value)}
-                     onKeyPress={(e) => e.key === 'Enter' && handleSendProjectMessage()}
-                     placeholder="Escreva sua mensagem aqui..."
-                     className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                   />
-                   <button
-                     onClick={handleSendProjectMessage}
-                     disabled={sendingProjectMessage || !newProjectMessage.trim()}
-                     className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all"
-                   >
-                      <Send size={20} />
-                   </button>
-                </div>
-             </div>
-          </div>
-        </div>
-      )}
-      {showContractModal && selectedProjectForContract && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-               <h2 className="text-xl font-bold text-gray-900">Gerador de Contratos</h2>
-               <button onClick={() => setShowContractModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <Plus size={24} className="rotate-45" />
-               </button>
-            </div>
-            
-            <p className="text-sm text-gray-500 mb-8 italic">
-               O contrato será preenchido automaticamente com os dados do cliente e do projeto. Escolha o modelo desejado:
-            </p>
-            
-            <div className="space-y-4">
-               <button
-                 onClick={() => handleGenerateContract('service')}
-                 className="w-full flex items-center gap-4 p-5 border-2 border-gray-100 rounded-2xl hover:border-blue-600 hover:bg-blue-50 transition-all text-left group"
-               >
-                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
-                     <FileText size={24} />
-                  </div>
-                  <div>
-                     <p className="font-bold text-gray-900">Contrato de Serviço</p>
-                     <p className="text-xs text-gray-500">Desenvolvimento, design e prazos.</p>
-                  </div>
-               </button>
-
-               <button
-                 onClick={() => handleGenerateContract('maintenance')}
-                 className="w-full flex items-center gap-4 p-5 border-2 border-gray-100 rounded-2xl hover:border-green-600 hover:bg-green-50 transition-all text-left group"
-               >
-                  <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center group-hover:bg-green-600 group-hover:text-white transition-all">
-                     <Shield size={24} />
-                  </div>
-                  <div>
-                     <p className="font-bold text-gray-900">Contrato de Manutenção</p>
-                     <p className="text-xs text-gray-500">Suporte, tráfego e atualizações.</p>
-                  </div>
-               </button>
-            </div>
-            
-            <div className="mt-8 p-4 bg-orange-50 border border-orange-100 rounded-xl">
-               <p className="text-[10px] text-orange-700 font-bold uppercase tracking-widest flex items-center gap-2">
-                  <Shield size={12} /> Assinatura Digital Ativada
-               </p>
-               <p className="text-[10px] text-orange-600 mt-1">
-                  Este contrato inclui cláusulas de validade jurídica para assinaturas via código SMS/WhatsApp.
-               </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <ServiceModal
+        isOpen={showServiceModal}
+        onClose={() => {
+          setShowServiceModal(false);
+          setEditingService(null);
+        }}
+        editingService={editingService}
+        serviceForm={serviceForm}
+        setServiceForm={setServiceForm}
+        handleSaveService={handleSaveService}
+      />
+      <ReplyModal
+        isOpen={showReplyModal}
+        onClose={() => {
+          setShowReplyModal(false);
+          setSelectedMessage(null);
+          setIsMessageEdited(false);
+        }}
+        selectedMessage={selectedMessage}
+        replyForm={replyForm}
+        setReplyForm={setReplyForm}
+        setIsMessageEdited={setIsMessageEdited}
+        handleReplyWhatsApp={handleReplyWhatsApp}
+        handleReplyEmail={handleReplyEmail}
+      />
+      <ClientModal
+        isOpen={showClientModal}
+        onClose={() => {
+          setShowClientModal(false);
+          setEditingClient(null);
+        }}
+        editingClient={editingClient}
+        clientForm={clientForm}
+        setClientForm={setClientForm}
+        handleSaveClient={handleSaveClient}
+      />
+      <StepModal
+        isOpen={showStepModal}
+        onClose={() => setShowStepModal(false)}
+        selectedProject={selectedProjectForSteps}
+        projectSteps={projectSteps}
+        stepForm={stepForm}
+        setStepForm={setStepForm}
+        editingStep={editingStep}
+        setEditingStep={setEditingStep}
+        handleSaveStep={handleSaveStep}
+        handleDeleteStep={handleDeleteStep}
+      />
+      <ChatModal
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        selectedProject={selectedProjectForChat}
+        projectMessages={projectMessages}
+        newProjectMessage={newProjectMessage}
+        setNewProjectMessage={setNewProjectMessage}
+        handleSendProjectMessage={handleSendProjectMessage}
+        sendingProjectMessage={sendingProjectMessage}
+        user={user}
+      />
+      <ContractModal
+        isOpen={showContractModal}
+        onClose={() => setShowContractModal(false)}
+        selectedProject={selectedProjectForContract}
+        handleGenerateContract={handleGenerateContract}
+      />
       {showAdminAuthModal && (
         <AdminAuthModal 
           onConfirm={() => handleSaveClient(true)}
@@ -2637,180 +1548,23 @@ export function AdminDashboard() {
         />
       )}
       
-      {showBlogModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
-          <div className="bg-white rounded-3xl p-8 max-w-4xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-gray-900 uppercase tracking-widest border-l-4 border-blue-600 pl-4">
-                {editingBlogPost ? 'Editar Artigo' : 'Novo Artigo'}
-              </h2>
-              <button onClick={() => setShowBlogModal(false)} className="text-gray-400 hover:text-gray-600 transition-all">
-                <Plus size={24} className="rotate-45" />
-              </button>
-            </div>
+      <BlogModal
+        isOpen={showBlogModal}
+        onClose={() => setShowBlogModal(false)}
+        editingBlogPost={editingBlogPost}
+        blogForm={blogForm}
+        setBlogForm={setBlogForm}
+        handleSaveBlogPost={handleSaveBlogPost}
+      />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Título do Artigo</label>
-                <input
-                  type="text"
-                  value={blogForm.title}
-                  onChange={(e) => {
-                    const title = e.target.value;
-                    const slug = title
-                      .toLowerCase()
-                      .normalize('NFD')
-                      .replace(/[\u0300-\u036f]/g, "")
-                      .replace(/[^\w\s-]/g, "")
-                      .trim()
-                      .replace(/\s+/g, "-");
-                    setBlogForm({ ...blogForm, title, slug });
-                  }}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-lg"
-                  placeholder="Título cativante..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Slug (URL Amigável)</label>
-                <input
-                  type="text"
-                  value={blogForm.slug}
-                  onChange={(e) => setBlogForm({ ...blogForm, slug: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-xs bg-gray-50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
-                <select
-                  value={blogForm.status}
-                  onChange={(e) => setBlogForm({ ...blogForm, status: e.target.value as 'draft' | 'published' })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold"
-                >
-                  <option value="draft">Rascunho</option>
-                  <option value="published">Publicado</option>
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">URL da Imagem de Capa</label>
-                <input
-                  type="text"
-                  value={blogForm.featured_image_url}
-                  onChange={(e) => setBlogForm({ ...blogForm, featured_image_url: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                  placeholder="https://exemplo.com/imagem.jpg"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Resumo (Excerpt)</label>
-                <textarea
-                  value={blogForm.excerpt}
-                  onChange={(e) => setBlogForm({ ...blogForm, excerpt: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm min-h-[80px]"
-                  placeholder="Um pequeno resumo para o card..."
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Conteúdo (HTML/Texto)</label>
-                <textarea
-                  value={blogForm.content}
-                  onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm min-h-[300px] font-mono"
-                  placeholder="Escreva o conteúdo aqui... (Aceita HTML básico)"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-4 mt-8">
-              <button
-                onClick={handleSaveBlogPost}
-                className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
-              >
-                Salvar Artigo
-              </button>
-              <button onClick={() => setShowBlogModal(false)} className="px-8 py-4 bg-gray-100 text-gray-400 font-bold rounded-xl hover:bg-gray-200 transition-all">
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showLogoModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-gray-900 uppercase tracking-widest border-l-4 border-blue-600 pl-4">
-                {editingLogo ? 'Editar Logo' : 'Novo Logo'}
-              </h2>
-              <button onClick={() => setShowLogoModal(false)} className="text-gray-400 hover:text-gray-600 transition-all">
-                <Plus size={24} className="rotate-45" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Nome do Cliente</label>
-                <input
-                  type="text"
-                  value={logoForm.name}
-                  onChange={(e) => setLogoForm({ ...logoForm, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold"
-                  placeholder="Ex: Coca-Cola"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">URL da Logo (Fundo Transparente)</label>
-                <input
-                  type="text"
-                  value={logoForm.image_url}
-                  onChange={(e) => setLogoForm({ ...logoForm, image_url: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                  placeholder="https://link-da-imagem.png"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Website do Cliente (Opcional)</label>
-                <input
-                  type="text"
-                  value={logoForm.website_url}
-                  onChange={(e) => setLogoForm({ ...logoForm, website_url: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                  placeholder="https://exemplo.com"
-                />
-              </div>
-
-              <label className="flex items-center gap-3 cursor-pointer py-2">
-                <input
-                  type="checkbox"
-                  checked={logoForm.is_active}
-                  onChange={(e) => setLogoForm({ ...logoForm, is_active: e.target.checked })}
-                  className="w-5 h-5 rounded text-blue-600 border-gray-300"
-                />
-                <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">Ativo no Carrossel</span>
-              </label>
-            </div>
-
-            <div className="flex gap-4 mt-8">
-              <button
-                onClick={handleSaveLogo}
-                className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
-              >
-                Salvar Logo
-              </button>
-              <button onClick={() => setShowLogoModal(false)} className="px-8 py-4 bg-gray-100 text-gray-400 font-bold rounded-xl hover:bg-gray-200 transition-all">
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LogoModal
+        isOpen={showLogoModal}
+        onClose={() => setShowLogoModal(false)}
+        editingLogo={editingLogo}
+        logoForm={logoForm}
+        setLogoForm={setLogoForm}
+        handleSaveLogo={handleSaveLogo}
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Plus, Edit, CheckSquare, MessageSquare, FileText, Trash2 } from 'lucide-react';
+import { Plus, Edit, CheckSquare, MessageSquare, FileText, Trash2, Search } from 'lucide-react';
 import { Project, Profile, Service } from '../../../types';
 
 type ProjectsTabProps = {
@@ -9,6 +9,8 @@ type ProjectsTabProps = {
   onOpenChat: (project: Project) => void;
   onGenerateContract: (project: Project & { client: Profile; service: Service }) => void;
   onDeleteProject: (id: string) => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
 };
 
 export function ProjectsTab({
@@ -19,18 +21,34 @@ export function ProjectsTab({
   onOpenChat,
   onGenerateContract,
   onDeleteProject,
+  searchQuery,
+  onSearchChange,
 }: ProjectsTabProps) {
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h2 className="text-2xl font-bold">Projetos</h2>
-        <button
-          onClick={onNewProject}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
-        >
-          <Plus size={18} />
-          Novo Projeto
-        </button>
+        
+        <div className="flex flex-1 w-full md:w-auto items-center gap-2">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar por projeto ou cliente..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+          
+          <button
+            onClick={onNewProject}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 shrink-0"
+          >
+            <Plus size={18} />
+            Novo Projeto
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">

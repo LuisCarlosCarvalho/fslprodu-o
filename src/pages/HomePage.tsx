@@ -96,78 +96,91 @@ export function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen">
-      <section className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <div className="min-h-screen bg-slate-50">
+      <section className="relative min-h-[90vh] flex items-center bg-slate-900 py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        {/* Advanced Ambient Background */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(59,130,246,0.15),_transparent_50%)]" />
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+        
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full opacity-40"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-900/50" />
         <div className="max-w-7xl mx-auto text-center relative z-10">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 drop-shadow-lg">
-            Transforme sua Presença Digital
+          <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full text-blue-400 text-sm font-black uppercase tracking-widest mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Zap size={14} />
+            Especialistas em Escala Digital
+          </div>
+          <h1 className="text-white mb-6 drop-shadow-2xl">
+            Transforme sua <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Presença Digital</span>
           </h1>
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            FSL Solution, uma empresa de marketing digital focada em fornecer soluções de marketing inteligentes e eficazes para empresas de todos os tamanhos e setores. Nós nos dedicamos a ajudar nossos clientes a alcançar seus objetivos de negócios, oferecendo uma ampla gama de serviços de marketing digital, incluindo estratégia de mídia social, publicidade online, criação de website, otimização de mecanismos de busca, SEO, produção de conteúdo e muito mais.
+          <p className="text-xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+            FSL Solution: Inteligência analítica e design de alta performance para empresas que buscam resultados reais.
           </p>
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            O que nos diferencia é a nossa abordagem personalizada para cada cliente. Nosso objetivo é entender as necessidades de cada cliente criar soluções de marketing exclusivas para atender às suas necessidades específicas.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link
               href="/services"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="premium-button bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-1"
             >
-              Solicitar Orçamento
+              Iniciar Projeto
               <ArrowRight size={20} />
+            </Link>
+            <Link
+              href="/portfolio"
+              className="px-8 py-4 rounded-2xl font-black text-white border border-white/10 hover:bg-white/5 transition-all"
+            >
+              Ver Portfolio
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="section-padding px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-            Por que Escolher a FSL Solution Digital?
-          </h2>
+          <div className="text-center mb-20">
+            <h2 className="text-slate-900 mb-4">
+              Por que Escolher a FSL Solution?
+            </h2>
+            <div className="w-24 h-1.5 bg-blue-600 mx-auto rounded-full" />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center p-6">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="glass-card p-10 hover:border-blue-500/30">
+              <div className="bg-blue-500/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 border border-blue-500/20">
                 <Zap className="text-blue-600" size={32} />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Entrega Rápida</h3>
-              <p className="text-gray-600">
-                Projetos entregues no prazo, com qualidade e profissionalismo
+              <h3 className="text-xl mb-4 text-slate-900 leading-tight">Entrega Rápida</h3>
+              <p className="text-slate-500 font-medium">
+                Sprints focados e metodologia ágil para resultados em tempo recorde.
               </p>
             </div>
 
-            <div className="text-center p-6">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Target className="text-green-600" size={32} />
+            <div className="glass-card p-10 hover:border-emerald-500/30">
+              <div className="bg-emerald-500/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 border border-emerald-500/20">
+                <Target className="text-emerald-600" size={32} />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Focados em Resultados</h3>
-              <p className="text-gray-600">
-                Estratégias personalizadas para alcançar seus objetivos
+              <h3 className="text-xl mb-4 text-slate-900 leading-tight">Focados em ROI</h3>
+              <p className="text-slate-500 font-medium">
+                Estratégias baseadas em dados para garantir o retorno do seu investimento.
               </p>
             </div>
 
-            <div className="text-center p-6">
-              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="glass-card p-10 hover:border-orange-500/30">
+              <div className="bg-orange-500/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 border border-orange-500/20">
                 <TrendingUp className="text-orange-600" size={32} />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Crescimento Garantido</h3>
-              <p className="text-gray-600">
-                Soluções que escalam junto com seu negócio
+              <h3 className="text-xl mb-4 text-slate-900 leading-tight">Crescimento Escalonável</h3>
+              <p className="text-slate-500 font-medium">
+                Soluções que acompanham a evolução e o volume do seu negócio.
               </p>
             </div>
 
-            <div className="text-center p-6">
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="text-purple-600" size={32} />
+            <div className="glass-card p-10 hover:border-indigo-500/30">
+              <div className="bg-indigo-500/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 border border-indigo-500/20">
+                <Users className="text-indigo-600" size={32} />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Suporte Dedicado</h3>
-              <p className="text-gray-600">
-                Acompanhamento personalizado em todas as etapas
+              <h3 className="text-xl mb-4 text-slate-900 leading-tight">Suporte 360º</h3>
+              <p className="text-slate-500 font-medium">
+                Monitoramento contínuo e acompanhamento estratégico dedicado.
               </p>
             </div>
           </div>
@@ -177,19 +190,20 @@ export function HomePage() {
       <BlogSection />
       <LogoCarousel />
 
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-blue-600 text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">
-            Pronto para Começar seu Projeto?
+      <section className="section-padding px-4 sm:px-6 lg:px-8 bg-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-blue-600 opacity-5" />
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <h2 className="text-white mb-6">
+            Pronto para Escalar seu Faturamento?
           </h2>
-          <p className="text-xl mb-8 text-blue-100">
-            Entre em contato e receba um orçamento personalizado para suas necessidades
+          <p className="text-xl mb-12 text-slate-400">
+            Entre em contato e descubra como nossas soluções de marketing inteligente podem transformar seu negócio hoje.
           </p>
           <Link
             href="/services"
-            className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
+            className="premium-button bg-white text-slate-900 hover:bg-slate-100"
           >
-            Solicitar Orçamento
+            Solicitar Orçamento Estratégico
             <ArrowRight size={20} />
           </Link>
         </div>
