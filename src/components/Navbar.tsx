@@ -73,44 +73,64 @@ export function Navbar() {
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t">
-          <div className="px-4 pt-2 pb-4 space-y-2">
-            <Link href="/" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
-            <Link href="/services" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Serviços</Link>
-            <Link href="/portfolio" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Portfolio</Link>
-            <Link href="/blog" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
-            <Link href="/infoproducts" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>SEO de Gestão</Link>
-            <Link href="/contact" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Contato</Link>
+        <div className="absolute top-full left-4 right-4 mt-2 md:hidden pointer-events-auto animate-in fade-in zoom-in-95 duration-200">
+          <div className="glass-card bg-white/90 backdrop-blur-xl border-white/40 shadow-2xl p-4 space-y-1">
+            <Link href="/" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-bold" onClick={() => setMobileMenuOpen(false)}>
+              Inicio
+            </Link>
+            <Link href="/services" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-bold" onClick={() => setMobileMenuOpen(false)}>
+              Serviços
+            </Link>
+            <Link href="/portfolio" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-bold" onClick={() => setMobileMenuOpen(false)}>
+              Portfolio
+            </Link>
+            <Link href="/blog" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-bold" onClick={() => setMobileMenuOpen(false)}>
+              Blog
+            </Link>
+            <Link href="/infoproducts" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-bold" onClick={() => setMobileMenuOpen(false)}>
+              SEO de Gestão
+            </Link>
+            <Link href="/contact" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-bold" onClick={() => setMobileMenuOpen(false)}>
+              Contato
+            </Link>
 
-            {user ? (
-              <>
-                <Link
-                  href={profile?.role === 'admin' ? '/admin' : '/dashboard'}
-                  className="block py-2 text-gray-700"
+            <div className="pt-4 mt-4 border-t border-gray-100 space-y-1">
+              {user ? (
+                <>
+                  <Link
+                    href={profile?.role === 'admin' ? '/admin' : '/dashboard'}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-bold"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <LayoutDashboard size={18} />
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={async () => {
+                      setMobileMenuOpen(false);
+                      try {
+                        await signOut();
+                        window.location.href = '/login';
+                      } catch (error) {
+                        window.location.href = '/login';
+                      }
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold w-full text-left"
+                  >
+                    <LogOut size={18} />
+                    Sair
+                  </button>
+                </>
+              ) : (
+                <Link 
+                  href="/login" 
+                  className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-xl transition-all font-bold justify-center" 
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Dashboard
+                  Login
                 </Link>
-                <button
-                  onClick={async () => {
-                    setMobileMenuOpen(false);
-                    try {
-                      await signOut();
-                      window.location.href = '/login';
-                    } catch (error) {
-                      window.location.href = '/login';
-                    }
-                  }}
-                  className="block py-2 text-gray-700 w-full text-left"
-                >
-                  Sair
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="block py-2 text-gray-700" onClick={() => setMobileMenuOpen(false)}>Login</Link>
-              </>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
