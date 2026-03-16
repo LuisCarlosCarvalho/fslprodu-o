@@ -1,0 +1,11 @@
+{
+  "name": "fsl-worker-telemetry",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker para Telemetria e Segurança",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo \"Nenhum build necessario. Worker pronto para deploy.\""
+  },
+  "author": "FSL Solution",
+  "license": "MIT"
+}
