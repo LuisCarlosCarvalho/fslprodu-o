@@ -99,18 +99,8 @@ const Dashboard = () => {
 
     fetchMetrics();
     
-    // Subscribe to new logs in real-time
-    const logsSubscription = supabase.channel('seo_logs_changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'seo_logs' }, (payload) => {
-        setPurgedCount((prev) => payload.new.status_code === 410 ? prev + 1 : prev);
-        // O recálculo do chart exigiria buscar a lista toda ou mutar o hook atual, 
-        // para essa view vamos atualizar pelo menos os contadores em tempo real.
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(logsSubscription);
-    };
+    // Removed realtime subscription to prevent console websocket errors
+    return () => {};
   }, []);
 
   // Lógica da Nota de Autoridade
@@ -168,9 +158,9 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
           <h3 className="text-xl font-semibold mb-4">Fluxo de Indexação (Googlebot)</h3>
-          <div className="h-72 w-full bg-slate-900 rounded-lg border border-slate-700 p-4">
+          <div className="h-[400px] w-full bg-slate-900 rounded-lg border border-slate-700 p-4">
              {/* Integração Recharts */}
-             <ResponsiveContainer width="100%" height="100%">
+             <ResponsiveContainer width="100%" height={350}>
               <AreaChart
                 data={chartData}
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
