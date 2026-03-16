@@ -35,6 +35,35 @@ export default {
       }).catch(err => console.error("Falha na telemetria:", err)));
     };
 
+    const sendTelegramAlert = async (message) => {
+      const token = env.TELEGRAM_BOT_TOKEN;
+      const chatId = env.TELEGRAM_CHAT_ID;
+      if (!token || !chatId) return;
+      const telegramUrl = `https://api.telegram.org/bot${token}/sendMessage`;
+      try {
+        await fetch(telegramUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
+        });
+      } catch (err) { console.error("Erro no Telegram:", err); }
+    };
+
+    const userAgent = (request.headers.get('user-agent') || '').toLowerCase();
+
+    // 0. TELEGRAM CTA WEBHOOK (POST /api/telegram-alert)
+    if (request.method === 'POST' && cleanPath === '/api/telegram-alert') {
+      try {
+        const body = await request.json();
+        if (body.type === 'cta_clicked') {
+          ctx.waitUntil(sendTelegramAlert(`🟢 <b>Conversão Analytics!</b>\nUsuário clicou no CTA da Pillar Page.\nURL: ${body.url}`));
+        }
+        return new Response("OK", { status: 200 });
+      } catch (e) {
+        return new Response("Error", { status: 400 });
+      }
+    }
+
     if (priorityRedirects[cleanPath]) {
       const destinationUrl = new URL(priorityRedirects[cleanPath], url.origin).toString();
       return Response.redirect(destinationUrl, 301); 
@@ -56,6 +85,10 @@ export default {
     const isLegacy = legacyPatterns.some(pattern => path.startsWith(pattern));
 
     if (isLegacy) {
+      if (userAgent.includes('googlebot')) {
+        ctx.waitUntil(sendTelegramAlert(`🤖 <b>Googlebot Detectado!</b>\nAcessou URL de expurgo (410).\nURL: ${url.href}`));
+      }
+      
       const htmlResponse = `
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -95,6 +128,13 @@ export default {
     // 3. FLUXO NORMAL DE APLICAÇÃO
     // Se não for um redirect prioritário nem um padrão legado, passa a requisição
     // adiante para o seu servidor principal (Hostinger).
-    return fetch(request);
+    const response = await fetch(request);
+    
+    // Alerta de 404 (Páginas esquecidas ou links quebrados)
+    if (response.status === 404 && !cleanPath.includes('.php') && !cleanPath.includes('wp-')) {
+      ctx.waitUntil(sendTelegramAlert(`🔴 <b>Alerta 404 - Página Não Encontrada</b>\nAlguém tentou acessar uma página inexistente que pode precisar de mapeamento 301/410.\nURL: ${url.href}\nUser-Agent: ${request.headers.get('user-agent')}`));
+    }
+    
+    return response;
   }
 };

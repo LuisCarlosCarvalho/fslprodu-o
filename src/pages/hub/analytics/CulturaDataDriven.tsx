@@ -1,7 +1,26 @@
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import { supabase } from '../../../lib/supabase';
 
 const CulturaDataDriven = () => {
+  const handleCTAClick = async () => {
+    try {
+      // 1. Log Supabase
+      await supabase.from('analytics_events').insert({
+        event_name: 'clique_cta',
+        page_path: window.location.pathname,
+        session_id: 'session_' + Math.random().toString(36).substr(2, 9)
+      });
+      // 2. Alert Telegram via Worker Endpoint
+      await fetch('/api/telegram-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'cta_clicked', url: window.location.href })
+      });
+    } catch(err) {
+      console.error(err);
+    }
+  };
   return (
     <article className="pillar-page-container">
       <Helmet>
@@ -155,7 +174,7 @@ const CulturaDataDriven = () => {
           <p className="text-slate-300 text-xl font-medium mb-8">
             A infraestrutura ideal entre Big Data, BI e Taggeamento precisa de direcionamento cirúrgico para fugir dos passivos da má configuração de mercado. Pronto para parar de adivinhar onde investir?
           </p>
-          <Link to="/solucoes/data-analytics-BI" className="premium-button bg-blue-600 text-white hover:bg-blue-500 w-full sm:w-auto text-lg py-4 px-10">
+          <Link onClick={handleCTAClick} to="/solucoes/data-analytics-BI" className="premium-button bg-blue-600 text-white hover:bg-blue-500 w-full sm:w-auto text-lg py-4 px-10">
             Conheça as Soluções de Data Analytics
           </Link>
         </div>
