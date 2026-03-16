@@ -33,11 +33,23 @@ export function PortfolioPage() {
   useEffect(() => {
     const controller = new AbortController();
     loadPortfolio(controller.signal);
-    return () => controller.abort();
+
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.error('[Portfolio] DEBUG ERROR: Timeout ao carregar dados do Supabase. (5s)');
+        setLoading(false);
+      }
+    }, 5000);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const loadPortfolio = async (signal?: AbortSignal) => {
     try {
+      console.log(`[Portfolio] DEBUG: Iniciando fetch de portfolio... VITE_SUPABASE_URL ativo:`, !!import.meta.env.VITE_SUPABASE_URL);
       setLoading(true);
       
       const { data, error } = await supabase
@@ -47,7 +59,11 @@ export function PortfolioPage() {
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("[Portfolio] DEBUG ERROR fetching items:", error);
+        throw error;
+      }
+      console.log(`[Portfolio] DEBUG: Fetch concluído com sucesso. Itens recebidos:`, data?.length);
       setPortfolioItems(data || []);
     } catch (error: any) {
       if (error.name === 'AbortError') return;

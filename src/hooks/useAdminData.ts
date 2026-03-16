@@ -41,6 +41,9 @@ export function useAdminData(activeTab: string) {
 
     const controller = new AbortController();
     const signal = controller.signal;
+    const cacheBuster = Date.now(); // Cache bypass
+
+    console.log(`[Admin Data] DEBUG: Iniciando fetch para tab: ${activeTab}... VITE_SUPABASE_URL está configurado:`, !!import.meta.env.VITE_SUPABASE_URL);
 
     setLoading(true);
     try {
@@ -202,8 +205,9 @@ export function useAdminData(activeTab: string) {
       if (errMessage.includes('Invalid data') || errMessage.includes('PIN Company')) {
         return;
       }
-      console.warn('[Admin Data] Non-critical load error:', errMessage);
+      console.error('[Admin Data] DEBUG ERROR - Non-critical load error:', errMessage, error);
     } finally {
+      console.log(`[Admin Data] DEBUG: Fetch concluído para tab: ${activeTab}`);
       setLoading(false);
     }
   }, [activeTab]);
@@ -214,10 +218,10 @@ export function useAdminData(activeTab: string) {
     if (loading) {
       timeout = setTimeout(() => {
         if (loading) {
-          console.warn('[Admin Data] Loading timed out');
+          console.error('[Admin Data] DEBUG ERROR: Loading timed out após 5 segundos.');
           setLoading(false);
         }
-      }, 10000); // 10s timeout
+      }, 5000); // 5s timeout
     }
     return () => clearTimeout(timeout);
   }, [loading]);

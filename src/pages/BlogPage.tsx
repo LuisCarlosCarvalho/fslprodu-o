@@ -12,22 +12,32 @@ export function BlogPage() {
 
   useEffect(() => {
     async function loadAllPosts() {
+      console.log(`[Blog] DEBUG: Iniciando fetch de blog... VITE_SUPABASE_URL ativo:`, !!import.meta.env.VITE_SUPABASE_URL);
       try {
         const { data } = await supabase
           .from('blog_posts')
           .select('*')
           .eq('status', 'published')
           .order('published_at', { ascending: false });
-        
+        console.log(`[Blog] DEBUG: Fetch concluído com sucesso. Artigos recebidos:`, data?.length);
         setPosts(data || []);
       } catch (error) {
-        console.error('Error loading blog posts:', error);
+        console.error('[Blog] DEBUG ERROR loading blog posts:', error);
       } finally {
         setLoading(false);
       }
     }
     loadAllPosts();
     window.scrollTo(0, 0);
+
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.error('[Blog] DEBUG ERROR: Timeout ao carregar dados do Supabase. (5s)');
+        setLoading(false);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   if (loading) {
