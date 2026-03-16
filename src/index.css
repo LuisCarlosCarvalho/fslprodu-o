@@ -13,6 +13,11 @@
     --premium-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     --blue-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+
+    /* Fluid Typography */
+    --h1-size: clamp(2.5rem, 5vw, 4rem);
+    --h2-size: clamp(2rem, 4vw, 3rem);
+    --body-size: clamp(1.1rem, 2vw, 1.25rem);
   }
 
   html {
@@ -74,6 +79,20 @@
 
   .section-padding {
     @apply py-24 md:py-32;
+  }
+
+  /* SEO Pillar Page Styles */
+  .pillar-page-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 768px) {
+    .pillar-page-container {
+      padding: 15px;
+    }
   }
 }
 

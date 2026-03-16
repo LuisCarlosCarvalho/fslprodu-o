@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -24,6 +25,7 @@ const ApprovalsPage = lazy(() => import('./pages/ApprovalsPage'));
 const ProductDetailsPage = lazy(() => import('./pages/ProductDetailsPage').then(m => ({ default: m.ProductDetailsPage })));
 const TemplateDemoPage = lazy(() => import('./pages/TemplateDemoPage').then(m => ({ default: m.TemplateDemoPage })));
 const VisualDemoPage = lazy(() => import('./pages/VisualDemoPage').then(m => ({ default: m.VisualDemoPage })));
+const CulturaDataDriven = lazy(() => import('./pages/hub/analytics/CulturaDataDriven'));
 const PasswordChangeModal = lazy(() => import('./components/auth/PasswordChangeModal').then(m => ({ default: m.PasswordChangeModal })));
 
 // Loading Fallback
@@ -102,6 +104,7 @@ function Layout() {
           <Route path="/infoproducts" element={<InfoproductsPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
+          <Route path="/hub/analytics/cultura-data-driven-guia-definitivo" element={<CulturaDataDriven />} />
           <Route path="/admin-setup" element={<AdminSetupPage />} />
 
           {/* Auth Routes */}
@@ -217,11 +220,13 @@ export default function App() {
   }
 
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <Layout />
-        <ToastContainer />
-      </AuthProvider>
-    </ErrorBoundary>
+    <HelmetProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <Layout />
+          <ToastContainer />
+        </AuthProvider>
+      </ErrorBoundary>
+    </HelmetProvider>
   );
 }

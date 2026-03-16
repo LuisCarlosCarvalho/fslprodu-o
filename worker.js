@@ -16,10 +16,27 @@ export default {
     // a. Verifica se a rota exata bate com alguma regra de redirecionamento 301
     // (O trailing slash / final afeta o path, então comparamos sem ele ou verificamos ambas as formas)
     const cleanPath = path.endsWith('/') && path !== '/' ? path.slice(0, -1) : path;
-    
+    const supabaseUrl = env.SUPABASE_URL || "https://qzjzlpilmptoojuguqas.supabase.co";
+    const supabaseKey = env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6anpscGlsbXB0b29qdWd1cWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNDQ2NjIsImV4cCI6MjA4MjkyMDY2Mn0.z2Mv4Nzvyel0xEZrcCxmoqBwpYHmoTPTRLlJ6Ja_ujI";
+
+    const logToSupabase = (loggedPath, statusCode) => {
+      ctx.waitUntil(fetch(`${supabaseUrl}/rest/v1/seo_logs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        },
+        body: JSON.stringify({
+          path: loggedPath,
+          status_code: statusCode,
+          user_agent: request.headers.get('user-agent') || 'unknown'
+        })
+      }).catch(err => console.error("Falha na telemetria:", err)));
+    };
+
     if (priorityRedirects[cleanPath]) {
       const destinationUrl = new URL(priorityRedirects[cleanPath], url.origin).toString();
-      
       return Response.redirect(destinationUrl, 301); 
       // Status 301: Permanent Redirect (Transfere o "Link Juice" do Google)
     }
@@ -59,6 +76,7 @@ export default {
         </html>
       `;
 
+      logToSupabase(cleanPath, 410); // Loga no Supabase em background
       return new Response(htmlResponse, {
         status: 410,
         headers: {
@@ -66,6 +84,12 @@ export default {
           'X-Robots-Tag': 'noindex, noarchive' // Reforço para desindexação
         }
       });
+    }
+
+    // 2.5 TELEMETRIA DE SUCESSO DO HUB (200)
+    // Se for um acesso ao novo Hub, loga as visualizações (status 200)
+    if (cleanPath.startsWith('/hub')) {
+      logToSupabase(cleanPath, 200);
     }
 
     // 3. FLUXO NORMAL DE APLICAÇÃO

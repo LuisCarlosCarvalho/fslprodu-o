@@ -24,6 +24,7 @@ import { ProductRegistrationStepper } from './admin/components/ProductRegistrati
 import { AdminAuthModal } from '../components/admin/AdminAuthModal';
 import { TrafficAnalysisTab } from './admin/components/TrafficAnalysisTab';
 import { SEOAdminTab } from './admin/components/SEOAdminTab';
+import Dashboard from './admin/Dashboard';
 
 import { ProjectModal } from './admin/modals/ProjectModal';
 import { ClientModal } from './admin/modals/ClientModal';
@@ -36,7 +37,7 @@ import { ReplyModal } from './admin/modals/ReplyModal';
 import { PortfolioModal } from './admin/modals/PortfolioModal';
 import { ServiceModal } from './admin/modals/ServiceModal';
 
-type Tab = 'overview' | 'projects' | 'clients' | 'messages' | 'quotes' | 'infoproducts' | 'portfolio' | 'blog' | 'logos' | 'services' | 'checkout_config' | 'traffic' | 'seo_admin';
+type Tab = 'overview' | 'engine_control' | 'projects' | 'clients' | 'messages' | 'quotes' | 'infoproducts' | 'portfolio' | 'blog' | 'logos' | 'services' | 'checkout_config' | 'traffic' | 'seo_admin';
 
 export function AdminDashboard() {
   const { user, profile } = useAuth();
@@ -49,7 +50,7 @@ export function AdminDashboard() {
     const connected = params.get('connected');
     
     if (tab && [
-      'overview', 'projects', 'clients', 'messages', 'quotes', 
+      'overview', 'engine_control', 'projects', 'clients', 'messages', 'quotes', 
       'infoproducts', 'portfolio', 'blog', 'logos', 'services', 
       'checkout_config', 'traffic', 'seo_admin'
     ].includes(tab)) {
@@ -878,6 +879,17 @@ export function AdminDashboard() {
               <TrendingUp size={20} />
               Visão Geral
             </button>
+            <button
+              onClick={() => setActiveTab('engine_control')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'engine_control'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <BarChart3 size={20} />
+              Engine Control
+            </button>
 
             <div className="pt-4 pb-2 px-4 text-xs font-black text-gray-400 uppercase tracking-widest">
               Gestão
@@ -1110,6 +1122,9 @@ export function AdminDashboard() {
                     }}
                     onViewMessages={() => setActiveTab('messages')}
                   />
+                )}
+                {activeTab === 'engine_control' && (
+                  <Dashboard />
                 )}
                 {activeTab === 'projects' && (
                   <ProjectsTab
