@@ -279,7 +279,7 @@ export function ClientDashboard() {
                <label className="relative cursor-pointer group">
                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl overflow-hidden border-2 border-transparent group-hover:border-blue-400 transition-all">
                    {profile?.avatar_url ? (
-                     <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+                     <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" loading="lazy" onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=User&background=random'; e.currentTarget.onerror = null; }} />
                    ) : (
                      profile?.full_name?.charAt(0)
                    )}

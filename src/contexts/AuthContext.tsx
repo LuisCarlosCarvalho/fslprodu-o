@@ -29,6 +29,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Robust Session Init Check
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error || !data.session) {
+        if (error) console.error('[Auth Context] Session init error - forcing clean state:', error);
+        localStorage.clear();
+        sessionStorage.clear();
+        supabase.auth.signOut().catch(() => {});
+      }
+    });
+
     // Use onAuthStateChange for both initial session and subsequent changes
     // This is more stable as Supabase triggers INITIAL_SESSION automatically
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -121,10 +131,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      setUser(null);
-      setProfile(null);
     } catch (err) {
       console.error('[Auth Context] Sign out error:', err);
+    } finally {
+      localStorage.clear();
+      sessionStorage.clear();
+      setUser(null);
+      setProfile(null);
+      window.location.reload();
     }
   };
 

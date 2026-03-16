@@ -20,6 +20,11 @@
     --body-size: clamp(1.1rem, 2vw, 1.25rem);
   }
 
+  html, body, #root {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;

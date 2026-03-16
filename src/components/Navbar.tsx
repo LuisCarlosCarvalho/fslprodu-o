@@ -8,12 +8,12 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="fixed w-full top-0 z-50 px-4 pt-4 pointer-events-none">
+    <nav className="fixed w-full top-0 z-[9999] px-4 pt-4 pointer-events-none">
       <div className="max-w-7xl mx-auto glass-card border-white/20 px-6 py-3 pointer-events-auto">
         <div className="flex justify-between h-12">
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2 sm:gap-3">
-              <img src="/logo.png" alt="FSL Solution" className="h-8 w-8 sm:h-10 sm:w-10" />
+              <img src="/logo.png" alt="FSL Solution" className="h-8 w-8 sm:h-10 sm:w-10" loading="lazy" onError={(e) => { e.currentTarget.src = '/logo.png'; e.currentTarget.onerror = null; }} />
               <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
                 <span className="text-lg sm:text-2xl font-bold text-gray-900 leading-tight">FSL Solution</span>
                 <span className="text-[10px] sm:text-sm font-medium text-blue-600 uppercase tracking-wider -mt-1 sm:mt-0">Digital</span>
@@ -73,7 +73,7 @@ export function Navbar() {
       </div>
 
       {mobileMenuOpen && (
-        <div className="absolute top-full left-4 right-4 mt-2 md:hidden pointer-events-auto animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-full left-4 right-4 mt-2 md:hidden pointer-events-auto animate-in fade-in zoom-in-95 duration-200 z-[9999]">
           <div className="glass-card bg-white/90 backdrop-blur-xl border-white/40 shadow-2xl p-4 space-y-1">
             <Link href="/" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-bold" onClick={() => setMobileMenuOpen(false)}>
               Inicio
