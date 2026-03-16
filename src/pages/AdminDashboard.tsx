@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { Project, Service, Profile, QuoteRequest, MarketingProduct, Portfolio, ProjectStep, BlogPost, ClientLogo } from '../types';
 import { getErrorMessage } from '../lib/errors';
 import { GlobalPaymentSettings, PaymentMethodsState } from '../types';
-import { Users, FolderOpen, MessageSquare, CheckSquare, Settings, Briefcase, TrendingUp, Lock, BarChart3, MessageCircle, FileText, ShoppingCart } from 'lucide-react';
+import { Users, FolderOpen, MessageSquare, CheckSquare, Settings, Briefcase, TrendingUp, Lock, BarChart3, MessageCircle, FileText, ShoppingCart, Activity } from 'lucide-react';
 import { generateContractPDF } from '../lib/contracts';
 import { useAdminData } from '../hooks/useAdminData';
 import { ProjectsTab } from './admin/components/ProjectsTab';
@@ -25,6 +25,7 @@ import { AdminAuthModal } from '../components/admin/AdminAuthModal';
 import { TrafficAnalysisTab } from './admin/components/TrafficAnalysisTab';
 import { SEOAdminTab } from './admin/components/SEOAdminTab';
 import Dashboard from './admin/Dashboard';
+import FinancialIntelligence from './admin/FinancialIntelligence';
 
 import { ProjectModal } from './admin/modals/ProjectModal';
 import { ClientModal } from './admin/modals/ClientModal';
@@ -37,7 +38,7 @@ import { ReplyModal } from './admin/modals/ReplyModal';
 import { PortfolioModal } from './admin/modals/PortfolioModal';
 import { ServiceModal } from './admin/modals/ServiceModal';
 
-type Tab = 'overview' | 'engine_control' | 'projects' | 'clients' | 'messages' | 'quotes' | 'infoproducts' | 'portfolio' | 'blog' | 'logos' | 'services' | 'checkout_config' | 'traffic' | 'seo_admin';
+type Tab = 'overview' | 'engine_control' | 'financial_intelligence' | 'projects' | 'clients' | 'messages' | 'quotes' | 'infoproducts' | 'portfolio' | 'blog' | 'logos' | 'services' | 'checkout_config' | 'traffic' | 'seo_admin';
 
 export function AdminDashboard() {
   const { user, profile } = useAuth();
@@ -50,7 +51,7 @@ export function AdminDashboard() {
     const connected = params.get('connected');
     
     if (tab && [
-      'overview', 'engine_control', 'projects', 'clients', 'messages', 'quotes', 
+      'overview', 'engine_control', 'financial_intelligence', 'projects', 'clients', 'messages', 'quotes', 
       'infoproducts', 'portfolio', 'blog', 'logos', 'services', 
       'checkout_config', 'traffic', 'seo_admin'
     ].includes(tab)) {
@@ -890,6 +891,17 @@ export function AdminDashboard() {
               <BarChart3 size={20} />
               Engine Control
             </button>
+            <button
+              onClick={() => setActiveTab('financial_intelligence')}
+              className={`w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all ${
+                activeTab === 'financial_intelligence'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Activity size={20} />
+              Controladoria Analítica
+            </button>
 
             <div className="pt-4 pb-2 px-4 text-xs font-black text-gray-400 uppercase tracking-widest">
               Gestão
@@ -1125,6 +1137,9 @@ export function AdminDashboard() {
                 )}
                 {activeTab === 'engine_control' && (
                   <Dashboard />
+                )}
+                {activeTab === 'financial_intelligence' && (
+                  <FinancialIntelligence />
                 )}
                 {activeTab === 'projects' && (
                   <ProjectsTab
