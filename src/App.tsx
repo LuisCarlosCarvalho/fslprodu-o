@@ -5,7 +5,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { InstallPWA } from './components/InstallPWA';
-import { EnvCheck } from './components/EnvCheck';
 import { Loader2 } from 'lucide-react';
 
 // Lazy loading pages
@@ -213,12 +212,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 import { ToastContainer } from './components/ui/Toast';
 
 export default function App() {
-  const envError = <EnvCheck />;
-
-  if (envError && (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY)) {
-    return envError;
-  }
-
+  // Removed strict EnvCheck block to allow safe fallbacks in supabase.ts to operate
   return (
     <HelmetProvider>
       <ErrorBoundary>
