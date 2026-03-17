@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, ChevronLeft, ArrowRight } from 'lucide-react';
+import { Calendar, ChevronLeft, ArrowRight, AlertTriangle } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { supabase } from '../lib/supabase';
 import { BlogPost } from '../types';
@@ -9,6 +9,7 @@ export function BlogPage() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorStatus, setErrorStatus] = useState(false);
 
   useEffect(() => {
     async function loadAllPosts() {
@@ -23,6 +24,8 @@ export function BlogPage() {
         setPosts(data || []);
       } catch (error) {
         console.error('[Blog] DEBUG ERROR loading blog posts:', error);
+        setErrorStatus(true);
+        await supabase.auth.signOut();
       } finally {
         setLoading(false);
       }
@@ -30,15 +33,37 @@ export function BlogPage() {
     loadAllPosts();
     window.scrollTo(0, 0);
 
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.error('[Blog] DEBUG ERROR: Timeout ao carregar dados do Supabase. (5s)');
-        setLoading(false);
-      }
-    }, 5000);
+    const timeout = setTimeout(async () => {
+      console.error('[Blog] DEBUG ERROR: Timeout fatal de 10s recebido.');
+      setErrorStatus(true);
+      setLoading(false);
+      await supabase.auth.signOut();
+    }, 10000);
 
     return () => clearTimeout(timeout);
   }, []);
+
+  if (errorStatus) {
+    return (
+      <div className="pt-32 pb-24 min-h-screen bg-gray-50 flex flex-col justify-center">
+        <div className="max-w-2xl mx-auto px-4 text-center">
+          <div className="bg-red-50/50 rounded-3xl border border-red-100 p-12 shadow-sm">
+            <AlertTriangle className="mx-auto text-red-500 mb-6" size={56} />
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Erro de Conexão</h3>
+            <p className="text-gray-600 font-medium text-lg leading-relaxed">
+              O banco de dados não respondeu no tempo esperado. Seu cache de sessão de segurança foi limpo automaticamente para resolver falhas de estado da Vercel.
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-8 inline-flex items-center gap-2 bg-red-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors"
+            >
+              Atualizar Página
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

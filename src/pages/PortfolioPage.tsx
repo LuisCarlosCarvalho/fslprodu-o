@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { Link } from "../components/Link";
-import { Eye } from "lucide-react";
+import { Eye, AlertTriangle } from "lucide-react";
 
 interface PortfolioItem {
   id: string;
@@ -28,18 +28,20 @@ const categories = [
 export function PortfolioPage() {
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorStatus, setErrorStatus] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
 
   useEffect(() => {
     const controller = new AbortController();
     loadPortfolio(controller.signal);
 
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.error('[Portfolio] DEBUG ERROR: Timeout ao carregar dados do Supabase. (5s)');
-        setLoading(false);
-      }
-    }, 5000);
+    const timeout = setTimeout(async () => {
+      // The state might not be fully accurate here if closed over, but simple heuristic prevents infinite skeleton
+      console.error('[Portfolio] DEBUG ERROR: Timeout fatal de 10s recebido.');
+      setErrorStatus(true);
+      setLoading(false);
+      await supabase.auth.signOut();
+    }, 10000);
 
     return () => {
       controller.abort();
@@ -68,6 +70,8 @@ export function PortfolioPage() {
     } catch (error: any) {
       if (error.name === 'AbortError') return;
       console.error("[Portfolio] Error loading portfolio items:", error);
+      setErrorStatus(true);
+      await supabase.auth.signOut();
     } finally {
       setLoading(false);
     }
@@ -105,7 +109,19 @@ export function PortfolioPage() {
           </div>
         </div>
 
-        {loading ? (
+        {errorStatus ? (
+          <div className="text-center py-20 bg-red-50/50 rounded-3xl border border-red-100 shadow-sm mt-12 mx-auto max-w-2xl">
+            <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Erro de Conexão</h3>
+            <p className="text-gray-600 font-medium">Os dados demoraram muito para responder. Isso indica uma falha de rede ou no banco. Limpamos seu cache de sessão local.</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-6 inline-flex items-center gap-2 bg-red-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        ) : loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg overflow-hidden shadow-md animate-pulse">
