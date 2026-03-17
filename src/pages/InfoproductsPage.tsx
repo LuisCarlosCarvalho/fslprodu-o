@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { ShoppingCart, ExternalLink, Link as LinkIcon, AlertTriangle } from 'lucide-react';
 import { supabase, MarketingProduct } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import { showToast } from '../components/ui/Toast';
@@ -7,11 +7,28 @@ import { showToast } from '../components/ui/Toast';
 export function InfoproductsPage() {
   const [products, setProducts] = useState<MarketingProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorStatus, setErrorStatus] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     loadProducts(controller.signal);
-    return () => controller.abort();
+
+    const timeout = setTimeout(() => {
+      setLoading((currentLoading) => {
+        if (currentLoading) {
+          console.error('[Infoproducts] DEBUG ERROR: Timeout fatal de 10s recebido.');
+          setErrorStatus(true);
+          supabase.auth.signOut().catch(console.error);
+          return false;
+        }
+        return currentLoading;
+      });
+    }, 10000);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const loadProducts = async (signal?: AbortSignal) => {
@@ -49,7 +66,19 @@ export function InfoproductsPage() {
           </p>
         </div>
 
-        {loading ? (
+        {errorStatus ? (
+          <div className="text-center py-20 bg-red-50/50 rounded-3xl border border-red-100 shadow-sm mt-12 mx-auto max-w-2xl">
+            <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Erro de Conexão</h3>
+            <p className="text-gray-600 font-medium">Os dados demoraram muito para responder. Isso indica uma falha de rede ou no banco. Limpamos seu cache de sessão local.</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-6 inline-flex items-center gap-2 bg-red-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        ) : loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             <p className="mt-4 text-gray-600">Carregando produtos...</p>

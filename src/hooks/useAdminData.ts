@@ -12,6 +12,7 @@ export type AdminData = {
   blogPosts: BlogPost[];
   clientLogos: ClientLogo[];
   loading: boolean;
+  errorStatus: boolean;
   loadData: () => Promise<void>;
 };
 
@@ -25,6 +26,7 @@ export function useAdminData(activeTab: string) {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [clientLogos, setClientLogos] = useState<ClientLogo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorStatus, setErrorStatus] = useState(false);
   const [stats, setStats] = useState({
     projects: 0,
     clients: 0,
@@ -214,17 +216,19 @@ export function useAdminData(activeTab: string) {
 
   // Safety timeout
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    if (loading) {
-      timeout = setTimeout(() => {
-        if (loading) {
-          console.error('[Admin Data] DEBUG ERROR: Loading timed out após 5 segundos.');
-          setLoading(false);
+    const timeout = setTimeout(() => {
+      setLoading((currentLoading) => {
+        if (currentLoading) {
+          console.error('[Admin Data] DEBUG ERROR: Timeout fatal de 10s recebido no painel.');
+          setErrorStatus(true);
+          supabase.auth.signOut().catch(console.error);
+          return false;
         }
-      }, 5000); // 5s timeout
-    }
+        return currentLoading;
+      });
+    }, 10000); // 10s timeout
     return () => clearTimeout(timeout);
-  }, [loading]);
+  }, [activeTab]);
 
   useEffect(() => {
     loadData();
@@ -241,6 +245,7 @@ export function useAdminData(activeTab: string) {
     clientLogos,
     stats,
     loading,
+    errorStatus,
     loadData
   };
 }

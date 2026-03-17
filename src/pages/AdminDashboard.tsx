@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { Project, Service, Profile, QuoteRequest, MarketingProduct, Portfolio, ProjectStep, BlogPost, ClientLogo } from '../types';
 import { getErrorMessage } from '../lib/errors';
 import { GlobalPaymentSettings, PaymentMethodsState } from '../types';
-import { Users, FolderOpen, MessageSquare, CheckSquare, Settings, Briefcase, TrendingUp, Lock, BarChart3, MessageCircle, FileText, ShoppingCart, Activity } from 'lucide-react';
+import { Users, FolderOpen, MessageSquare, CheckSquare, Settings, Briefcase, TrendingUp, Lock, BarChart3, MessageCircle, FileText, ShoppingCart, Activity, AlertTriangle } from 'lucide-react';
 import { generateContractPDF } from '../lib/contracts';
 import { useAdminData } from '../hooks/useAdminData';
 import { ProjectsTab } from './admin/components/ProjectsTab';
@@ -76,6 +76,7 @@ export function AdminDashboard() {
     clientLogos,
     stats,
     loading,
+    errorStatus,
     loadData
   } = useAdminData(activeTab);
 
@@ -1067,7 +1068,19 @@ export function AdminDashboard() {
       <div className="flex-1 min-w-0 bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 min-h-[600px] p-6 lg:p-8">
-            {loading ? (
+            {errorStatus ? (
+              <div className="text-center py-20 bg-red-50/50 rounded-3xl border border-red-100 shadow-sm mx-auto max-w-2xl mt-8">
+                <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Erro de Conexão no Painel</h3>
+                <p className="text-gray-600 font-medium">O banco de dados demorou muito para responder. O cache de segurança foi limpo. Tente novamente.</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="mt-6 inline-flex items-center gap-2 bg-red-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors"
+                >
+                  Tentar Novamente
+                </button>
+              </div>
+            ) : loading ? (
               <div className="flex justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
               </div>
