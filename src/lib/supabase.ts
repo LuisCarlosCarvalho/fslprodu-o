@@ -15,10 +15,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-console.log('[DEBUG SUPABASE INIT]', {
-  url: supabaseUrl,
-  hasKey: !!supabaseAnonKey,
-  client: supabase
-});
+
 
 export * from '../types';
