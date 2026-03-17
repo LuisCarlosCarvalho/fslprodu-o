@@ -219,14 +219,13 @@ export function useAdminData(activeTab: string) {
     const timeout = setTimeout(() => {
       setLoading((currentLoading) => {
         if (currentLoading) {
-          console.error('[Admin Data] DEBUG ERROR: Timeout fatal de 10s recebido no painel.');
+          console.warn('[Admin Data] Aviso: Timeout de 30s da UI atingido no painel.');
           setErrorStatus(true);
-          supabase.auth.signOut().catch(console.error);
           return false;
         }
         return currentLoading;
       });
-    }, 10000); // 10s timeout
+    }, 30000); // 30s timeout
     return () => clearTimeout(timeout);
   }, [activeTab]);
 

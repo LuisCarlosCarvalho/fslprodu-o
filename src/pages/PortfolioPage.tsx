@@ -35,18 +35,17 @@ export function PortfolioPage() {
     const controller = new AbortController();
     loadPortfolio(controller.signal);
 
-    const timeout = setTimeout(async () => {
+    const timeout = setTimeout(() => {
       // Check if it's still loading before firing the fatal error
       setLoading((currentLoading) => {
         if (currentLoading) {
-          console.error('[Portfolio] DEBUG ERROR: Timeout fatal de 10s recebido.');
+          console.warn('[Portfolio] Aviso: Timeout de 30s da UI atingido (banco muito lento).');
           setErrorStatus(true);
-          supabase.auth.signOut().catch(console.error);
           return false;
         }
         return currentLoading;
       });
-    }, 10000);
+    }, 30000);
 
     return () => {
       controller.abort();
