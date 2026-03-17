@@ -33,11 +33,16 @@ export function BlogPage() {
     loadAllPosts();
     window.scrollTo(0, 0);
 
-    const timeout = setTimeout(async () => {
-      console.error('[Blog] DEBUG ERROR: Timeout fatal de 10s recebido.');
-      setErrorStatus(true);
-      setLoading(false);
-      await supabase.auth.signOut();
+    const timeout = setTimeout(() => {
+      setLoading((currentLoading) => {
+        if (currentLoading) {
+          console.error('[Blog] DEBUG ERROR: Timeout fatal de 10s recebido.');
+          setErrorStatus(true);
+          supabase.auth.signOut().catch(console.error);
+          return false;
+        }
+        return currentLoading;
+      });
     }, 10000);
 
     return () => clearTimeout(timeout);

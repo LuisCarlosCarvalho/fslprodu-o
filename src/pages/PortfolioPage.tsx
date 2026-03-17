@@ -36,11 +36,16 @@ export function PortfolioPage() {
     loadPortfolio(controller.signal);
 
     const timeout = setTimeout(async () => {
-      // The state might not be fully accurate here if closed over, but simple heuristic prevents infinite skeleton
-      console.error('[Portfolio] DEBUG ERROR: Timeout fatal de 10s recebido.');
-      setErrorStatus(true);
-      setLoading(false);
-      await supabase.auth.signOut();
+      // Check if it's still loading before firing the fatal error
+      setLoading((currentLoading) => {
+        if (currentLoading) {
+          console.error('[Portfolio] DEBUG ERROR: Timeout fatal de 10s recebido.');
+          setErrorStatus(true);
+          supabase.auth.signOut().catch(console.error);
+          return false;
+        }
+        return currentLoading;
+      });
     }, 10000);
 
     return () => {
@@ -73,6 +78,8 @@ export function PortfolioPage() {
       setErrorStatus(true);
       await supabase.auth.signOut();
     } finally {
+      // The timeout is cleared by the useEffect cleanup, 
+      // but we ensure loading is false so the timeout callback (if it fires) does nothing.
       setLoading(false);
     }
   };
