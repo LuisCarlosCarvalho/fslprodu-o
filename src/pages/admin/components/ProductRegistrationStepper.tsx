@@ -660,7 +660,22 @@ export function ProductRegistrationStepper({ product, onSave, onClose }: Product
                     </p>
                   </div>
 
-                  <div className="bg-gray-900 rounded-3xl p-6 text-white">
+                  <div className="bg-gray-900 rounded-3xl p-6 text-white mb-6">
+                    <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                      <div>
+                        <h4 className="font-black uppercase tracking-widest text-[10px] text-blue-400">Automação Social</h4>
+                        <p className="text-xs text-gray-400 mt-1">Disparar postagens no Make/Zapier.</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer" 
+                          checked={formData.publish_to_social || false}
+                          onChange={(e) => setFormData({ ...formData, publish_to_social: e.target.checked })}
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
                     <h4 className="font-black uppercase tracking-widest text-[10px] text-gray-400 mb-4">Status de Publicação</h4>
                     <select
                       value={formData.status}

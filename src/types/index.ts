@@ -100,6 +100,8 @@ export type MarketingProduct = {
   category: string;
   created_at: string;
   updated_at?: string;
+  publish_to_social?: boolean;
+  social_status?: string;
   seo_metadata?: {
     primary_keyword?: string;
     secondary_keywords?: string[];

@@ -24,6 +24,7 @@ import { ProductRegistrationStepper } from './admin/components/ProductRegistrati
 import { AdminAuthModal } from '../components/admin/AdminAuthModal';
 import { TrafficAnalysisTab } from './admin/components/TrafficAnalysisTab';
 import { SEOAdminTab } from './admin/components/SEOAdminTab';
+import { SEOAdminService } from '../services/SEOAdminService';
 import Dashboard from './admin/Dashboard';
 import FinancialIntelligence from './admin/FinancialIntelligence';
 
@@ -1527,6 +1528,27 @@ export function AdminDashboard() {
               
               if (saveError) throw new Error(saveError.message);
               
+              if (data.publish_to_social) {
+                try {
+                  const config = await SEOAdminService.getSettings();
+                  if (config?.social_webhook_url) {
+                    fetch(config.social_webhook_url, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ 
+                        event: 'new_marketing_product', 
+                        product: { ...data, id: editingMarketingProduct?.id || 'new_post' } 
+                      })
+                    }).catch(e => console.error('Silent fetch webhook error:', e));
+                    
+                    showToast('Webhook Social Disparado!', 'success');
+                  }
+                } catch (webhookErr) {
+                  console.error('Webhook payload error', webhookErr);
+                  showToast('Salvo, mas falha no Webhook.', 'error');
+                }
+              }
+
               setShowInfoproductModal(false);
               setEditingMarketingProduct(null);
               loadData();

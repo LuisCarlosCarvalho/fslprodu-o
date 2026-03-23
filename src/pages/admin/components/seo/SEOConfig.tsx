@@ -3,6 +3,7 @@ import { Plus, Trash2, Save, Globe, Shield } from 'lucide-react';
 import { supabase } from '../../../../lib/supabase';
 import { SEODomain } from '../../../../types/seo-intelligence';
 import { SEOIntegrationService } from '../../../../services/SEOIntegrationService';
+import { SEOAdminService } from '../../../../services/SEOAdminService';
 import { showToast } from '../../../../components/ui/Toast';
 
 export function SEOConfig() {
@@ -11,10 +12,22 @@ export function SEOConfig() {
   const [newDomain, setNewDomain] = useState('');
   const [isCompetitor, setIsCompetitor] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [savingWebhook, setSavingWebhook] = useState(false);
 
   useEffect(() => {
     loadDomains();
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await SEOAdminService.getSettings();
+      if (settings?.social_webhook_url) setWebhookUrl(settings.social_webhook_url);
+    } catch (e) {
+      console.error('Failed to load SEO settings:', e);
+    }
+  };
 
   const loadDomains = async () => {
     try {
@@ -85,6 +98,37 @@ export function SEOConfig() {
           <button className="px-6 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all flex items-center gap-2">
             <Save size={18} />
             Salvar
+          </button>
+        </div>
+
+        <div className="flex gap-4 items-end mt-6">
+          <div className="flex-1">
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Webhook de Publicação (Redes Sociais)</label>
+            <input 
+              type="text" 
+              value={webhookUrl}
+              onChange={(e) => setWebhookUrl(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+              placeholder="https://sua-url-make.com/webhook/post"
+            />
+          </div>
+          <button 
+            onClick={async () => {
+              setSavingWebhook(true);
+              try {
+                await SEOAdminService.updateSettings({ social_webhook_url: webhookUrl });
+                showToast('Webhook de automação salvo!', 'success');
+              } catch (e) {
+                showToast('Erro ao salvar webhook', 'error');
+              } finally {
+                setSavingWebhook(false);
+              }
+            }}
+            disabled={savingWebhook}
+            className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
+          >
+            <Save size={18} />
+            {savingWebhook ? 'Salvando...' : 'Salvar Webhook'}
           </button>
         </div>
       </div>

@@ -12,6 +12,7 @@ export interface SEOGlobalSettings {
   feature_gsc_integration_enabled: boolean;
   feature_competitor_comparison_enabled: boolean;
   global_override_disabled: boolean;
+  social_webhook_url?: string;
 }
 
 export const SEOAdminService = {
