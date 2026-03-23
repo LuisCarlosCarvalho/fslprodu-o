@@ -1510,42 +1510,53 @@ export function AdminDashboard() {
           onSave={async (data) => {
             try {
               let saveError;
+              
+              const payload = {
+                ...data,
+                publish_to_social: data.publish_to_social ?? false,
+                updated_at: new Date().toISOString()
+              };
+
               if (editingMarketingProduct) {
                 const { error } = await supabase
                   .from('marketing_products')
-                  .update({
-                    ...data,
-                    updated_at: new Date().toISOString()
-                  })
+                  .update(payload)
                   .eq('id', editingMarketingProduct.id);
                 saveError = error;
               } else {
                 const { error } = await supabase
                   .from('marketing_products')
-                  .insert([data]);
+                  .insert([payload]);
                 saveError = error;
               }
               
-              if (saveError) throw new Error(saveError.message);
+              if (saveError) {
+                console.error("DB Insert Error:", saveError);
+                throw new Error(saveError.message);
+              }
               
-              if (data.publish_to_social) {
+              if (payload.publish_to_social) {
                 try {
                   const config = await SEOAdminService.getSettings();
-                  if (config?.social_webhook_url) {
-                    fetch(config.social_webhook_url, {
+                  if (config && config.social_webhook_url && config.social_webhook_url.trim() !== '') {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    
+                    await fetch(config.social_webhook_url, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ 
                         event: 'new_marketing_product', 
                         product: { ...data, id: editingMarketingProduct?.id || 'new_post' } 
-                      })
-                    }).catch(e => console.error('Silent fetch webhook error:', e));
+                      }),
+                      signal: controller.signal
+                    });
                     
+                    clearTimeout(timeoutId);
                     showToast('Webhook Social Disparado!', 'success');
                   }
-                } catch (webhookErr) {
-                  console.error('Webhook payload error', webhookErr);
-                  showToast('Salvo, mas falha no Webhook.', 'error');
+                } catch (webhookErr: any) {
+                  console.warn('Silent webhook failure (rede ou timeout):', webhookErr.message);
                 }
               }
 
