@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   MessageSquare,
   Globe,
-  Share2
+  Share2,
+  Loader2
 } from 'lucide-react';
 import { MarketingProduct } from '../../../types';
 
@@ -26,6 +27,7 @@ interface ProductRegistrationStepperProps {
 
 export function ProductRegistrationStepper({ product, onSave, onClose }: ProductRegistrationStepperProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<MarketingProduct>>({
     title: product?.title || '',
     public_code: product?.public_code || '',
@@ -764,11 +766,21 @@ export function ProductRegistrationStepper({ product, onSave, onClose }: Product
                </button>
              ) : (
                <button 
-                onClick={() => onSave(formData)}
-                className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-xl shadow-blue-200 active:scale-95"
+                onClick={async () => {
+                  setIsSubmitting(true);
+                  try {
+                    await onSave(formData);
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+                disabled={isSubmitting}
+                className={`px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold transition-all flex items-center gap-2 shadow-xl shadow-blue-200 ${
+                  isSubmitting ? 'opacity-70 cursor-wait' : 'hover:bg-blue-700 active:scale-95'
+                }`}
                >
-                 <Save size={20} />
-                 Finalizar Registro
+                 {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                 {isSubmitting ? 'Salvando...' : 'Finalizar Registro'}
                </button>
              )}
           </div>

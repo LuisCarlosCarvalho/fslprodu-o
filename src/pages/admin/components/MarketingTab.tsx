@@ -1,4 +1,4 @@
-import { Plus, Edit, Trash2, CheckSquare, X, Check } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckSquare, X, Check, Rocket } from 'lucide-react';
 import { useState } from 'react';
 import { MarketingProduct } from '../../../types';
 
@@ -140,8 +140,21 @@ export function MarketingTab({
           </div>
         ))}
         {products.length === 0 && (
-          <div className="col-span-full text-center py-12 text-gray-500 border-2 border-dashed rounded-lg">
-            Nenhum produto de marketing cadastrado.
+          <div className="col-span-full border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center py-24 bg-gray-50/50 shadow-sm animate-in fade-in zoom-in-95 duration-500">
+            <div className="w-24 h-24 bg-blue-100/50 rounded-full flex items-center justify-center text-blue-600 mb-6 shadow-sm border border-blue-100">
+              <Rocket size={48} className="animate-bounce mt-2" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">Sua vitrine está vazia</h3>
+            <p className="text-gray-500 mb-8 max-w-md text-center leading-relaxed">
+              Crie produtos ou serviços de marketing, defina preços e gere links públicos para converter mais clientes.
+            </p>
+            <button
+              onClick={onNewProduct}
+              className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-blue-600 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-200 transition-all active:scale-95"
+            >
+              <Plus size={20} />
+              Criar Primeiro Produto
+            </button>
           </div>
         )}
       </div>

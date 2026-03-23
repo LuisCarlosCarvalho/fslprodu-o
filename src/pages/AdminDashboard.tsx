@@ -1508,26 +1508,32 @@ export function AdminDashboard() {
           product={editingMarketingProduct}
           onSave={async (data) => {
             try {
+              let saveError;
               if (editingMarketingProduct) {
-                await supabase
+                const { error } = await supabase
                   .from('marketing_products')
                   .update({
                     ...data,
                     updated_at: new Date().toISOString()
                   })
                   .eq('id', editingMarketingProduct.id);
+                saveError = error;
               } else {
-                await supabase
+                const { error } = await supabase
                   .from('marketing_products')
                   .insert([data]);
+                saveError = error;
               }
+              
+              if (saveError) throw new Error(saveError.message);
+              
               setShowInfoproductModal(false);
               setEditingMarketingProduct(null);
               loadData();
               showToast('Produto salvo com sucesso!', 'success');
             } catch (error) {
               console.error('Error saving marketing product:', getErrorMessage(error));
-              showToast('Erro ao salvar produto.', 'error');
+              showToast(getErrorMessage(error), 'error');
             }
           }}
           onClose={() => {
