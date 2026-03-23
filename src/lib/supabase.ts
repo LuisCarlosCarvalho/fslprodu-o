@@ -54,6 +54,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-console.log('Supabase Init:', !!supabaseUrl);
-
 export * from '../types';
