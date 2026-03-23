@@ -65,12 +65,21 @@ export function ContactPage() {
     }
   };
 
-  const handleNextStep = () => {
-    if (!formData.name || !formData.email || !formData.service_type) {
-      showToast('Por favor, preencha os campos obrigatórios.', 'error');
+  const handleNextStep1 = () => {
+    if (!formData.name || !formData.email || !formData.region) {
+      showToast('Por favor, preencha os campos obrigatórios (Nome, E-mail, Região).', 'error');
       return;
     }
     setStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNextStep2 = () => {
+    if (!formData.service_type) {
+      showToast('Por favor, selecione o serviço.', 'error');
+      return;
+    }
+    setStep(3);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -238,20 +247,30 @@ export function ContactPage() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
               {/* Progress Bar */}
-              <div className="bg-gray-50 px-8 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex gap-4">
-                  <div className={`flex items-center gap-2 ${step === 1 ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${step === 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>1</span>
-                    <span className="font-bold text-sm hidden sm:inline">Info Básica</span>
+              <div className="bg-gray-50 px-8 py-4 border-b border-gray-100 flex items-center justify-between overflow-x-auto">
+                <div className="flex gap-3 min-w-max">
+                  {/* Step 1 */}
+                  <div className={`flex items-center gap-2 ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${step >= 1 ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-gray-200'}`}>1</span>
+                    <span className="font-bold text-sm">Identificação</span>
                   </div>
-                  <div className="w-8 h-px bg-gray-200 self-center" />
-                  <div className={`flex items-center gap-2 ${step === 2 ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${step === 2 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>2</span>
-                    <span className="font-bold text-sm hidden sm:inline">Detalhes do Projeto</span>
+                  <div className={`w-8 h-1 rounded-full self-center ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                  
+                  {/* Step 2 */}
+                  <div className={`flex items-center gap-2 ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${step >= 2 ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-gray-200'}`}>2</span>
+                    <span className="font-bold text-sm">Interesse</span>
+                  </div>
+                  <div className={`w-8 h-1 rounded-full self-center ${step >= 3 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+
+                  {/* Step 3 */}
+                  <div className={`flex items-center gap-2 ${step >= 3 ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${step >= 3 ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-gray-200'}`}>3</span>
+                    <span className="font-bold text-sm">Detalhes</span>
                   </div>
                 </div>
-                {step === 2 && (
-                  <button onClick={() => setStep(1)} className="text-sm font-bold text-blue-600 hover:text-blue-700">
+                {step > 1 && !submitSuccess && (
+                  <button onClick={() => setStep(step - 1)} className="text-sm font-bold text-gray-400 hover:text-blue-600 flex-shrink-0 ml-4 transition-colors">
                     Voltar
                   </button>
                 )}
@@ -259,27 +278,30 @@ export function ContactPage() {
 
               <div className="p-8 lg:p-12">
                 {submitSuccess ? (
-                  <div className="text-center py-12 animate-in zoom-in-95 duration-500">
-                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <ShieldCheck size={40} />
+                  <div className="text-center py-16 animate-in zoom-in-95 duration-700">
+                    <div className="relative w-32 h-32 mx-auto mb-8">
+                      <div className="absolute inset-0 bg-green-100 rounded-full animate-ping opacity-60"></div>
+                      <div className="relative w-full h-full bg-gradient-to-tr from-green-400 to-green-500 text-white rounded-full flex items-center justify-center shadow-2xl shadow-green-200 transform hover:scale-105 transition-transform duration-500">
+                        <ShieldCheck size={64} className="animate-bounce" />
+                      </div>
                     </div>
-                    <h3 className="text-3xl font-black text-gray-900 mb-4">Solicitação Confirmada!</h3>
-                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                      Obrigado por escolher a FSL Solution. Analisaremos seus detalhes e entraremos em contato em breve.
+                    <h3 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Solicitação Confirmada!</h3>
+                    <p className="text-lg text-gray-600 mb-10 max-w-md mx-auto leading-relaxed">
+                      Sua solicitação voou para nossa base de dados com segurança máxima. Nossa equipe de analistas revisará seu escopo e entrará em contato em breve.
                     </p>
                     <button 
                       onClick={() => setSubmitSuccess(false)}
-                      className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all"
+                      className="bg-gray-900 text-white px-10 py-4 rounded-2xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
                     >
                       Nova Solicitação
                     </button>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-8">
-                    {step === 1 ? (
+                    {step === 1 && (
                       <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="md:col-span-2">
+                        <div className="grid grid-cols-1 gap-6">
+                           <div>
                              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                                <User size={16} className="text-blue-500" />
                                Nome Completo *
@@ -292,24 +314,66 @@ export function ContactPage() {
                                value={formData.name}
                                onChange={(e) => setFormData({...formData, name: e.target.value})}
                              />
-                          </div>
+                           </div>
 
-                          <div>
+                           <div>
                              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                                <Mail size={16} className="text-blue-500" />
-                               E-mail *
+                               E-mail Corporativo *
                              </label>
                              <input
                                type="email"
                                required
                                className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium"
-                               placeholder="seu@contato.com"
+                               placeholder="seu@empresa.com"
                                value={formData.email}
                                onChange={(e) => setFormData({...formData, email: e.target.value})}
                              />
-                          </div>
+                           </div>
 
-                          <div>
+                           <div>
+                              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                <Globe size={16} className="text-blue-500" />
+                                Região de Faturamento *
+                              </label>
+                              <select
+                                required
+                                className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-gray-900 appearance-none cursor-pointer"
+                                value={formData.region}
+                                onChange={(e) => {
+                                  const selected = countryCodes.find(c => c.country === e.target.value);
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    region: e.target.value,
+                                    countryCode: selected ? selected.code : prev.countryCode,
+                                    service_details: { ...prev.service_details, budget_range: '' }
+                                  }));
+                                }}
+                              >
+                                <option value="Brasil">Brasil</option>
+                                <option value="Portugal">Portugal</option>
+                                <option value="Internacional">Outros (Internacional)</option>
+                              </select>
+                           </div>
+                        </div>
+
+                        <div className="pt-6">
+                          <button
+                            type="button"
+                            onClick={handleNextStep1}
+                            className="w-full bg-blue-600 text-white px-8 py-5 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-100"
+                          >
+                            Continuar para Contato
+                            <ArrowRight size={24} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {step === 2 && (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div className="grid grid-cols-1 gap-6">
+                           <div>
                              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                                <MessageCircle size={16} className="text-blue-500" />
                                WhatsApp / Telemóvel
@@ -340,39 +404,14 @@ export function ContactPage() {
                              </div>
                            </div>
 
-                           <div>
-                              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                <Globe size={16} className="text-blue-500" />
-                                Região de Faturamento *
-                              </label>
-                              <select
-                                required
-                                className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-gray-900 appearance-none"
-                                value={formData.region}
-                                onChange={(e) => {
-                                  const selected = countryCodes.find(c => c.country === e.target.value);
-                                  setFormData(prev => ({ 
-                                    ...prev, 
-                                    region: e.target.value,
-                                    countryCode: selected ? selected.code : prev.countryCode,
-                                    service_details: { ...prev.service_details, budget_range: '' }
-                                  }));
-                                }}
-                              >
-                                <option value="Brasil">Brasil</option>
-                                <option value="Portugal">Portugal</option>
-                                <option value="Internacional">Outros (Internacional)</option>
-                              </select>
-                           </div>
-
-                          <div className="md:col-span-2">
+                          <div>
                              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                                <Globe size={16} className="text-blue-500" />
-                               Serviço de Interesse *
+                               Qual Serviço você precisa? *
                              </label>
                              <select
                                required
-                               className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-gray-900 appearance-none"
+                               className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-gray-900 appearance-none cursor-pointer"
                                value={formData.service_type}
                                onChange={(e) => setFormData({...formData, service_type: e.target.value})}
                              >
@@ -385,19 +424,21 @@ export function ContactPage() {
                         <div className="pt-6">
                           <button
                             type="button"
-                            onClick={handleNextStep}
+                            onClick={handleNextStep2}
                             className="w-full bg-blue-600 text-white px-8 py-5 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-100"
                           >
-                            Configurar Detalhes do Projeto
+                            Configurar Escopo do Projeto
                             <ArrowRight size={24} />
                           </button>
                         </div>
                       </div>
-                    ) : (
+                    )}
+
+                    {step === 3 && (
                       <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                         <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 flex items-center justify-between">
                           <div>
-                            <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-1">Passo 2 de 2</p>
+                            <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-1">Passo 3 de 3</p>
                             <h4 className="text-lg font-black text-gray-900">{formData.service_type}</h4>
                           </div>
                           <Globe className="text-blue-500" size={32} />
@@ -406,11 +447,11 @@ export function ContactPage() {
                         {renderServiceForm()}
 
                         <div className="space-y-2">
-                           <label className="block text-sm font-bold text-gray-700">Informações Adicionais / Mensagem</label>
+                           <label className="block text-sm font-bold text-gray-700">Informações Adicionais / Contexto</label>
                            <textarea
                              rows={4}
                              className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none resize-none font-medium"
-                             placeholder="Diga algo mais sobre suas necessidades..."
+                             placeholder="Qual é o cenário atual da sua empresa e o que deseja alcançar?"
                              value={formData.message}
                              onChange={(e) => setFormData({...formData, message: e.target.value})}
                            />
@@ -426,9 +467,9 @@ export function ContactPage() {
                             type="submit"
                             disabled={loading}
                             onClick={() => setSubmitType('whatsapp')}
-                            className="bg-green-600 text-white px-8 py-5 rounded-2xl font-black hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-100 disabled:opacity-50"
+                            className="bg-[#25D366] text-white px-8 py-5 rounded-2xl font-black hover:bg-[#1DA851] transition-all flex items-center justify-center gap-3 shadow-lg shadow-[#25D366]/30 disabled:opacity-50"
                           >
-                            {loading && submitType === 'whatsapp' ? 'Processando...' : (
+                            {loading && submitType === 'whatsapp' ? 'Gerando Link Wa.me...' : (
                               <>
                                 <MessageCircle size={24} />
                                 Pedir via WhatsApp
@@ -441,7 +482,7 @@ export function ContactPage() {
                             onClick={() => setSubmitType('email')}
                             className="bg-black text-white px-8 py-5 rounded-2xl font-black hover:bg-gray-900 transition-all flex items-center justify-center gap-3 shadow-lg shadow-gray-200 disabled:opacity-50"
                           >
-                            {loading && submitType === 'email' ? 'Processando...' : (
+                            {loading && submitType === 'email' ? 'Registrando Lead...' : (
                               <>
                                 <Mail size={24} />
                                 Enviar por E-mail
@@ -449,7 +490,7 @@ export function ContactPage() {
                             )}
                           </button>
                         </div>
-                        <p className="text-xs text-gray-400 text-center">
+                        <p className="text-xs text-gray-400 text-center font-medium bg-gray-50 py-3 rounded-lg border border-dashed border-gray-200">
                           Analistas técnicos revisam cada orçamento individualmente. Resposta em até 24h.
                         </p>
                       </div>

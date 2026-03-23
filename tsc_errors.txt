@@ -1,0 +1,26 @@
+﻿
+> vite-react-typescript-starter@0.0.0 typecheck
+> tsc --noEmit -p tsconfig.app.json
+
+src/components/admin/AdminAuthModal.tsx(2,29): error TS6133: 'X' is declared but its value is never read.
+src/hooks/useAdminData.ts(46,11): error TS6133: 'cacheBuster' is declared but its value is never read.
+src/pages/admin/components/seo/SEOConfig.tsx(3,1): error TS6133: 'supabase' is declared but its value is never read.
+src/pages/admin/components/seo/SEOIntelligence.tsx(3,3): error TS6133: 'BarChart3' is declared but its value is never read.
+src/pages/admin/components/seo/SEOIntelligence.tsx(6,79): error TS6133: 'BarChart' is declared but its value is never read.
+src/pages/admin/components/seo/SEOIntelligence.tsx(6,89): error TS6133: 'Bar' is declared but its value is never read.
+src/pages/admin/components/seo/SEOIntelligence.tsx(6,94): error TS6133: 'Cell' is declared but its value is never read.
+src/pages/admin/components/seo/SEOIntelligence.tsx(209,47): error TS6133: 'inverseTrend' is declared but its value is never read.
+src/pages/admin/components/SEOAdminTab.tsx(2,58): error TS6133: 'Zap' is declared but its value is never read.
+src/pages/admin/modals/ChatModal.tsx(27,3): error TS6133: 'user' is declared but its value is never read.
+src/pages/admin/modals/ClientModal.tsx(2,19): error TS6133: 'PaymentMethodsState' is declared but its value is never read.
+src/pages/admin/modals/ClientModal.tsx(2,40): error TS6133: 'GlobalPaymentSettings' is declared but its value is never read.
+src/pages/admin/modals/PortfolioModal.tsx(1,1): error TS6133: 'Plus' is declared but its value is never read.
+src/pages/admin/modals/ProjectModal.tsx(1,15): error TS6133: 'Plus' is declared but its value is never read.
+src/pages/admin/modals/ServiceModal.tsx(1,24): error TS6133: 'Zap' is declared but its value is never read.
+src/pages/ClientDashboard.tsx(25,10): error TS6133: 'quotes' is declared but its value is never read.
+src/services/providers/SEMrushProvider.ts(6,11): error TS6133: 'apiKey' is declared but its value is never read.
+src/services/providers/SEMrushProvider.ts(17,26): error TS6133: 'domain' is declared but its value is never read.
+src/services/providers/SEMrushProvider.ts(17,42): error TS6133: 'country' is declared but its value is never read.
+src/services/providers/SEMrushProvider.ts(36,32): error TS6133: 'domain' is declared but its value is never read.
+src/services/providers/SEMrushProvider.ts(36,48): error TS6133: 'country' is declared but its value is never read.
+src/services/providers/SEMrushProvider.ts(46,25): error TS6133: 'domain' is declared but its value is never read.

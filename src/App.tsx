@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { InstallPWA } from './components/InstallPWA';
+import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { Loader2 } from 'lucide-react';
 
 // Lazy loading pages
@@ -90,6 +91,7 @@ function Layout() {
         )}
       </Suspense>
       <Navbar />
+      <FloatingWhatsApp />
       <InstallPWA />
       <main className="flex-grow pt-16">
         <Suspense fallback={<PageLoader />}>
