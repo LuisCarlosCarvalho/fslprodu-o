@@ -275,7 +275,7 @@ export function ClientDashboard() {
               <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Meus Projetos</h1>
               <p className="text-gray-500 mt-2 text-lg">Olá {profile?.full_name}, você possui {projects.length} {projects.length === 1 ? 'projeto' : 'projetos'} em andamento.</p>
             </div>
-            <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+            <div className="bg-white p-3 rounded-2xl shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50 flex items-center gap-4">
                <label className="relative cursor-pointer group">
                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl overflow-hidden border-2 border-transparent group-hover:border-blue-400 transition-all">
                    {profile?.avatar_url ? (
@@ -373,7 +373,7 @@ export function ClientDashboard() {
 
            <h2 className="text-4xl font-black text-gray-900 mb-6 tracking-tight">Bem-vindo à FSL Solution</h2>
            
-           <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 mb-10">
+           <div className="bg-white p-8 rounded-[40px] shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50 mb-10">
              <p className="text-gray-600 leading-relaxed text-lg">
                Você está em sua área administrativa.<br />
                <span className="text-gray-400 font-medium">Assim que seu projeto for iniciado, ele aparecerá aqui para acompanhamento em tempo real.</span>
@@ -478,7 +478,7 @@ export function ClientDashboard() {
           <div className="lg:col-span-3">
              {activeTab === 'overview' && (
                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100 bg-gradient-to-br from-white to-blue-50/30">
+                  <div className="bg-white rounded-[40px] p-10 shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50 bg-gradient-to-br from-white to-blue-50/30">
                     <div className="max-w-3xl">
                       <h2 className="text-3xl font-black text-gray-900 mb-4">Bem-vindo à FSL Solution</h2>
                       <p className="text-gray-600 leading-relaxed text-lg">
@@ -488,7 +488,7 @@ export function ClientDashboard() {
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
+                  <div className="bg-white rounded-[40px] p-10 shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50">
                     <h3 className="text-xl font-black text-gray-900 mb-8 border-b border-gray-50 pb-6 uppercase tracking-widest text-[10px] text-gray-400">Resumo Operacional</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                        <div className="space-y-2">
@@ -521,7 +521,7 @@ export function ClientDashboard() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <div className="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
+                     <div className="bg-white rounded-[40px] p-10 shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50">
                         <div className="flex items-center gap-4 mb-8">
                            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
                               <Calendar size={24} />
@@ -546,7 +546,7 @@ export function ClientDashboard() {
                         </div>
                      </div>
 
-                     <div className="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100 relative overflow-hidden group">
+                     <div className="bg-white rounded-[40px] p-10 shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50 relative overflow-hidden group">
                         <div className="flex items-center gap-4 mb-8">
                            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400">
                               <HistoryIcon size={24} />
@@ -566,7 +566,7 @@ export function ClientDashboard() {
 
              {activeTab === 'progress' && (
                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                 <div className="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100 overflow-hidden">
+                 <div className="bg-white rounded-[40px] p-10 shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50 overflow-hidden">
                     <div className="flex justify-between items-center mb-10">
                       <div>
                         <h3 className="text-2xl font-black text-gray-900">Lifecycle do Projeto</h3>
@@ -638,10 +638,10 @@ export function ClientDashboard() {
              )}
 
              {activeTab === 'messages' && (
-               <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 flex flex-col h-[70vh] animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+               <div className="bg-white rounded-[40px] shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50 flex flex-col h-[70vh] animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
                   <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm border border-gray-100">
+                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50">
                            <MessageSquare size={24} />
                         </div>
                         <div>
@@ -722,7 +722,7 @@ export function ClientDashboard() {
 
              {activeTab === 'files' && (
                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
+                  <div className="bg-white rounded-[40px] p-10 shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50">
                      <div className="flex justify-between items-center mb-10">
                         <div>
                           <h3 className="text-2xl font-black text-gray-900">Central de Documentos</h3>
@@ -788,7 +788,7 @@ export function ClientDashboard() {
 
              {activeTab === 'finance' && (
                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100 overflow-hidden relative">
+                  <div className="bg-white rounded-[40px] p-10 shadow-xl shadow-blue-50/40 border border-white ring-1 ring-gray-50 overflow-hidden relative">
                      <div className="flex justify-between items-start mb-12">
                         <div>
                           <h3 className="text-2xl font-black text-gray-900">Demonstrativo Financeiro</h3>

@@ -107,6 +107,28 @@ export function ContactPage() {
       const selectedService = services.find(s => s.name === formData.service_type || s.id === formData.service_type);
       const serviceName = selectedService ? selectedService.name : formData.service_type || 'Outro';
 
+      // Disparo de Eventos Google Analytics 4 (DataLayer)
+      if (typeof window !== 'undefined') {
+        (window as any).dataLayer = (window as any).dataLayer || [];
+        (window as any).dataLayer.push({
+          event: 'generate_lead',
+          service: serviceName,
+          leadType: submitType
+        });
+      }
+
+      // Registro Nativo de Evento no Supabase (Retenção / Analytics)
+      try {
+        await supabase.from('analytics_events').insert([{
+          event_type: 'generate_lead',
+          page_url: window.location.pathname,
+          metadata: { service: serviceName, type: submitType },
+          session_id: 'contact_wizard'
+        }]);
+      } catch (analyticsErr) {
+        console.warn('Analytics logging failed silently:', analyticsErr);
+      }
+
       if (submitType === 'whatsapp') {
         const whatsappMessage = `*Nova Solicitação de Orçamento*%0A%0A` +
           `*Nome:* ${formData.name}%0A` +
