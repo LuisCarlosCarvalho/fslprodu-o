@@ -16,6 +16,9 @@ export type AdminData = {
   loadData: () => Promise<void>;
 };
 
+// Global Memory Cache for Optimistic UI (SWR Pattern)
+const globalAdminCache: Record<string, any> = {};
+
 export function useAdminData(activeTab: string) {
   const [projects, setProjects] = useState<(Project & { client: Profile; service: Service })[]>([]);
   const [clients, setClients] = useState<Profile[]>([]);
@@ -57,6 +60,25 @@ export function useAdminData(activeTab: string) {
         return;
       }
 
+      // Optimistic UI: Paint Cached Data Instantly if available
+      const cached = globalAdminCache[activeTab];
+      if (cached) {
+        if (cached.projects) setProjects(cached.projects);
+        if (cached.clients) setClients(cached.clients);
+        if (cached.quotes) setQuotes(cached.quotes);
+        if (cached.marketingProducts) setMarketingProducts(cached.marketingProducts);
+        if (cached.portfolioItems) setPortfolioItems(cached.portfolioItems);
+        if (cached.services) setServices(cached.services);
+        if (cached.blogPosts) setBlogPosts(cached.blogPosts);
+        if (cached.clientLogos) setClientLogos(cached.clientLogos);
+        if (cached.stats) setStats(cached.stats);
+        setLoading(false); // Unlock UI instantly
+      } else {
+        setLoading(true);
+      }
+
+      const currentTabUpdates: any = {};
+
       // Check current tab
       if (activeTab === 'projects') {
         const { data: projectsData, error: projectsError } = await supabase
@@ -71,6 +93,7 @@ export function useAdminData(activeTab: string) {
         
         if (projectsError) throw projectsError;
         setProjects(projectsData || []);
+        currentTabUpdates.projects = projectsData || [];
 
         const { data: servicesData } = await supabase
           .from('services')
@@ -78,6 +101,7 @@ export function useAdminData(activeTab: string) {
           .order('name')
           .abortSignal(signal);
         setServices(servicesData || []);
+        currentTabUpdates.services = servicesData || [];
 
         const { data: clientsData } = await supabase
           .from('profiles')
@@ -86,6 +110,7 @@ export function useAdminData(activeTab: string) {
           .order('full_name')
           .abortSignal(signal);
         setClients(clientsData || []);
+        currentTabUpdates.clients = clientsData || [];
       } else if (activeTab === 'clients') {
         const { data: clientsData, error: clientsError } = await supabase
           .from('profiles')
@@ -96,6 +121,7 @@ export function useAdminData(activeTab: string) {
         
         if (clientsError) throw clientsError;
         setClients(clientsData || []);
+        currentTabUpdates.clients = clientsData || [];
 
         // Fetch projects to check which clients have them
         const { data: projectsData } = await supabase
@@ -108,6 +134,7 @@ export function useAdminData(activeTab: string) {
           .order('created_at', { ascending: false })
           .abortSignal(signal);
         setProjects(projectsData || []);
+        currentTabUpdates.projects = projectsData || [];
       } else if (activeTab === 'quotes' || activeTab === 'messages') {
         const { data: quotesData, error: quotesError } = await supabase
           .from('quote_requests')
@@ -134,6 +161,7 @@ export function useAdminData(activeTab: string) {
         }
         
         setQuotes(quotesData || []);
+        currentTabUpdates.quotes = quotesData || [];
       } else if (activeTab === 'infoproducts') {
         const { data: productsData } = await supabase
           .from('marketing_products')
@@ -141,6 +169,7 @@ export function useAdminData(activeTab: string) {
           .order('created_at', { ascending: false })
           .abortSignal(signal);
         setMarketingProducts(productsData || []);
+        currentTabUpdates.marketingProducts = productsData || [];
       } else if (activeTab === 'portfolio') {
         const { data: portfolioData } = await supabase
           .from('portfolio')
@@ -148,6 +177,7 @@ export function useAdminData(activeTab: string) {
           .order('created_at', { ascending: false })
           .abortSignal(signal);
         setPortfolioItems(portfolioData || []);
+        currentTabUpdates.portfolioItems = portfolioData || [];
       } else if (activeTab === 'services') {
         const { data: servicesData } = await supabase
           .from('services')
@@ -155,6 +185,7 @@ export function useAdminData(activeTab: string) {
           .order('name')
           .abortSignal(signal);
         setServices(servicesData || []);
+        currentTabUpdates.services = servicesData || [];
       } else if (activeTab === 'blog') {
         const { data: blogData } = await supabase
           .from('blog_posts')
@@ -162,6 +193,7 @@ export function useAdminData(activeTab: string) {
           .order('created_at', { ascending: false })
           .abortSignal(signal);
         setBlogPosts(blogData || []);
+        currentTabUpdates.blogPosts = blogData || [];
       } else if (activeTab === 'logos') {
         const { data: logosData } = await supabase
           .from('client_logos')
@@ -169,6 +201,7 @@ export function useAdminData(activeTab: string) {
           .order('order_index', { ascending: true })
           .abortSignal(signal);
         setClientLogos(logosData || []);
+        currentTabUpdates.clientLogos = logosData || [];
       } else if (activeTab === 'overview') {
         // Fetch each stat independently to prevent one failure from blocking the others
         const fetchCount = async (table: string, filter?: { col: string, val: string }) => {
@@ -191,13 +224,18 @@ export function useAdminData(activeTab: string) {
           fetchCount('blog_posts')
         ]);
 
-        setStats({
+        const statsData = {
           projects: projectsCount,
           clients: clientsCount,
           quotes: quotesCount,
           blogPosts: blogCount
-        });
+        };
+        setStats(statsData);
+        currentTabUpdates.stats = statsData;
       }
+      
+      // Persist to Central Cache
+      globalAdminCache[activeTab] = { ...(globalAdminCache[activeTab] || {}), ...currentTabUpdates };
     } catch (error: any) {
       if (error.name === 'AbortError') {
         return;

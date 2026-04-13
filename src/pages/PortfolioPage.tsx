@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { Link } from "../components/Link";
 import { Eye, AlertTriangle } from "lucide-react";
+import { LazyImage } from "../components/ui/LazyImage";
 
 interface PortfolioItem {
   id: string;
@@ -159,18 +160,11 @@ export function PortfolioPage() {
                   href={`/portfolio/demo/${item.id}`}
                   className="relative block aspect-[4/3] overflow-hidden bg-gray-100"
                 >
-                  <img
+                  <LazyImage
                     src={item.image_url}
                     alt={item.title}
-                    loading="lazy"
-                    decoding="async"
+                    wrapperClassName="w-full h-full"
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (!target.src.includes('placehold.co')) {
-                        target.src = 'https://placehold.co/800x600/e2e8f0/1e293b?text=Imagem+Indisponivel';
-                      }
-                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                     <p className="text-white text-sm px-6 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 font-medium">

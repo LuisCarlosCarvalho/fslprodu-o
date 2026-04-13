@@ -23,7 +23,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(() => {
+    try {
+      const cached = localStorage.getItem('__fsl_auth_profile');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,30 +40,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data, error }) => {
       if (error || !data.session) {
         if (error) console.error('[Auth Context] Session init error - forcing clean state:', error);
-        localStorage.clear();
-        sessionStorage.clear();
+        localStorage.removeItem('__fsl_auth_profile');
         supabase.auth.signOut().catch(() => {});
       }
     });
 
     // Use onAuthStateChange for both initial session and subsequent changes
-    // This is more stable as Supabase triggers INITIAL_SESSION automatically
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
       const sessionUser = session?.user ?? null;
       
-      // Only set loading(true) for specific identity-changing events to prevent flicker
-      // background token refreshes shouldn't trigger a full UI reload/spinner
       const isCriticalEvent = ['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'TOKEN_REFRESHED'].includes(event);
       if (isCriticalEvent && !sessionUser) {
          setLoading(true);
       }
 
-      // 1. Set user immediately
+      // 1. Set user immediately and release loading state early if we have optimistic cached profile
       setUser(sessionUser);
+      
+      const hasOptimisticProfile = sessionUser && localStorage.getItem('__fsl_auth_profile') !== null;
+      if (hasOptimisticProfile && mounted) {
+        setLoading(false); // UI doesn't freeze, drops immediately
+      }
 
-      // 2. Load profile if we have a user
+      // 2. Refresh profile silently in background if we have a user
       if (sessionUser) {
         try {
           const { data, error } = await supabase
@@ -66,16 +74,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .maybeSingle();
             
           if (error) throw error;
-          if (mounted) setProfile(data || null);
+          if (mounted) {
+            setProfile(data || null);
+            if (data) localStorage.setItem('__fsl_auth_profile', JSON.stringify(data));
+          }
         } catch (err) {
           console.error('[Auth Context] Profile load error:', err);
-          if (mounted) setProfile(null);
+          if (mounted) {
+            setProfile(null);
+            localStorage.removeItem('__fsl_auth_profile');
+          }
         }
       } else {
-        if (mounted) setProfile(null);
+        if (mounted) {
+          setProfile(null);
+          localStorage.removeItem('__fsl_auth_profile');
+        }
       }
 
-      // 3. Finalize loading state
+      // 3. Finalize true loading state if not already dropped
       if (mounted) setLoading(false);
     });
 

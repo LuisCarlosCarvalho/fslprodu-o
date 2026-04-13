@@ -1,5 +1,6 @@
 import { Plus, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { Portfolio } from '../../../types';
+import { LazyImage } from '../../../components/ui/LazyImage';
 
 type PortfolioTabProps = {
   items: Portfolio[];
@@ -27,10 +28,11 @@ export function PortfolioTab({ items, onNewItem, onEditItem, onDeleteItem }: Por
           <div key={item.id} className="border rounded-xl overflow-hidden bg-white shadow-sm group">
             <div className="aspect-video relative overflow-hidden bg-gray-100">
               {item.image_url ? (
-                <img 
+                <LazyImage 
                   src={item.image_url} 
                   alt={item.title} 
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  wrapperClassName="w-full h-full"
+                  className="transition-transform group-hover:scale-105"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">
