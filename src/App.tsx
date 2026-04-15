@@ -27,7 +27,7 @@ const TemplateDemoPage = lazy(() => import('./pages/TemplateDemoPage').then(m =>
 const VisualDemoPage = lazy(() => import('./pages/VisualDemoPage').then(m => ({ default: m.VisualDemoPage })));
 const CulturaDataDriven = lazy(() => import('./pages/hub/analytics/CulturaDataDriven'));
 const PasswordChangeModal = lazy(() => import('./components/auth/PasswordChangeModal').then(m => ({ default: m.PasswordChangeModal })));
-
+import { MaintenancePage } from './pages/MaintenancePage';
 // Loading Fallback
 function PageLoader() {
   return (
@@ -104,15 +104,16 @@ function Layout() {
         <Suspense fallback={<PageLoader />}>
           <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path="/services/*" element={<ServicesPage />} />
-          <Route path="/portfolio" element={<PortfolioPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/infoproducts" element={<InfoproductsPage />} />
-          <Route path="/blog" element={<BlogPage />} />
-          <Route path="/blog/:slug" element={<BlogPostPage />} />
-          <Route path="/hub/analytics/cultura-data-driven-guia-definitivo" element={<CulturaDataDriven />} />
+          {/* UNDER MAINTENANCE */}
+          <Route path="/" element={<MaintenancePage />} />
+          <Route path="/services" element={<MaintenancePage />} />
+          <Route path="/services/*" element={<MaintenancePage />} />
+          <Route path="/portfolio" element={<MaintenancePage />} />
+          <Route path="/contact" element={<MaintenancePage />} />
+          <Route path="/infoproducts" element={<MaintenancePage />} />
+          <Route path="/blog" element={<MaintenancePage />} />
+          <Route path="/blog/:slug" element={<MaintenancePage />} />
+          <Route path="/hub/analytics/cultura-data-driven-guia-definitivo" element={<MaintenancePage />} />
           <Route path="/admin-setup" element={<AdminSetupPage />} />
 
           {/* Auth Routes */}
@@ -148,14 +149,14 @@ function Layout() {
           />
 
           {/* Public Template Demo Route */}
-          <Route path="/demo/:filename" element={<TemplateDemoPage />} />
-          <Route path="/portfolio/demo/:id" element={<VisualDemoPage />} />
+          <Route path="/demo/:filename" element={<MaintenancePage />} />
+          <Route path="/portfolio/demo/:id" element={<MaintenancePage />} />
 
           {/* Public Product Route (Must be last to avoid conflicts) */}
-          <Route path="/:public_code" element={<ProductDetailsPage />} />
+          <Route path="/:public_code" element={<MaintenancePage />} />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<MaintenancePage />} />
         </Routes>
       </Suspense>
     </main>
